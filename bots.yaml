@@ -1,0 +1,67 @@
+---
+- name: Set up Discord bots
+  hosts: bots
+  vars:
+    bots:
+    - missionbot
+    #- operationbot
+    #- zeusopsbot
+
+  #roles:
+  #- role: systemd_service
+
+  tasks:
+  - name: Install virtualenv
+    ansible.builtin.apt:
+      name:
+        - virtualenv
+  - name: Create bot users
+    ansible.builtin.user:
+      name: "{{ item }}"
+      system: yes
+      home: "/srv/{{ item }}"
+    loop: "{{ bots }}"
+  - name: Clone bot repos
+    ansible.builtin.git:
+      repo: 'https://github.com/zeusops/{{ item }}.git'
+      dest: "/srv/{{ item }}/{{ item }}"
+    loop: "{{ bots }}"
+  - name: Install bot dependencies
+    # TODO: make bots directly installable with pip
+    ansible.builtin.pip:
+      requirements: "/srv/{{ item }}/{{ item }}/requirements.txt"
+      virtualenv: "/srv/{{ item }}/venv"
+    loop: "{{ bots }}"
+  - name: Create bot configs
+    ansible.builtin.copy:
+      src: "files/bots/config/{{ item.name }}.{{ item.file }}"
+      dest: "/srv/{{ item.name }}/{{ item.name }}/{{ item.file }}"
+    loop:
+      - { name: missionbot, file: config.py }
+      #- { name: operationbot, file: secret.py }
+      #- { name: zeusopsbot, file: config_local.yaml }
+  - name: Create bot systemd services
+    ansible.builtin.template:
+      src: files/bots/systemd.service.j2
+      dest: /etc/systemd/system/{{ item.name }}.service
+    vars:
+      name: "{{ item.name }}"
+      description: "{{ item.description }}"
+      module: "{{ item.module }}"
+    loop:
+    - { name: missionbot,   description: Mission bot,   module: null }
+    - { name: operationbot, description: Operation bot, module: null }
+    - { name: zeusopsbot,   description: Zeusops bot,   module: bot }
+    notify:
+    - Reload systemd
+  - name: Run bots
+    ansible.builtin.systemd:
+      state: started
+      enabled: yes
+      name: {{ item }}
+    loop: "{{ bots }}"
+
+  handlers:
+  - name: Reload systemd
+    ansible.builtin.systemd:
+      daemon_reload: yes

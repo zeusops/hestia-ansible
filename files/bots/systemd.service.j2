@@ -1,0 +1,19 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description={{ description }}
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment=PYTHONUNBUFFERED=1
+User={{ name }}
+Group={{ name }}
+WorkingDirectory=/srv/{{ name }}/{{ name }}
+{% if module -%}
+  ExecStart=/srv/{{ name }}/venv/bin/python -m {{ module }}
+{% else -%}
+  ExecStart=/srv/{{ name }}/venv/bin/python /srv/{{ name }}/{{ name }}/main.py
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target
