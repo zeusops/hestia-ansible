@@ -2,3 +2,6 @@ hestia	ansible_connection=local
 
 [web]
 hestia
+
+[bots]
+hestia

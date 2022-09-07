@@ -1,0 +1,13 @@
+---
+- name: Install nginx
+  hosts: web
+
+  tasks:
+  - name: Remove apache
+    ansible.builtin.apt:
+      name: apache2
+      state: absent
+  - name: Install nginx
+    ansible.builtin.apt:
+      name: nginx
+      update_cache: true
