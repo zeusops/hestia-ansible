@@ -54,3 +54,7 @@
       user: sami
       key: "{{ lookup('file', 'files/pubkeys/sami') }}"
       exclusive: True
+  - name: Set vim as editor
+    community.general.alternatives:
+      name: editor
+      path: /usr/bin/vim.basic
