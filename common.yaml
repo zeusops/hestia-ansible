@@ -1,0 +1,56 @@
+---
+- name: Common setup
+  hosts: all
+
+  tasks:
+  - name: Install zsh
+    ansible.builtin.apt:
+      name:
+        - zsh
+        - git
+        - tmux
+        - byobu
+      update_cache: true
+  - name: Set git default branch
+    community.general.git_config:
+      scope: system
+      name: init.defaultBranch
+      value: main
+  - name: Create users
+    ansible.builtin.user:
+      name: sami
+      shell: /usr/bin/zsh
+  - name: Set git username (root)
+    community.general.git_config:
+      scope: global
+      name: user.name
+      value: Sami Laine
+  - name: Set git username (sami)
+    become: true
+    become_user: sami
+    community.general.git_config:
+      scope: global
+      name: user.name
+      value: Sami Laine
+  - name: Set git email (root)
+    community.general.git_config:
+      scope: global
+      name: user.email
+      value: sami.v.laine@gmail.com
+  - name: Set git email (sami)
+    become: true
+    become_user: sami
+    community.general.git_config:
+      scope: global
+      name: user.email
+      value: sami.v.laine@gmail.com
+  - name: Add SSH keys (root)
+    ansible.posix.authorized_key:
+      user: root
+      key: "{{ lookup('file', 'files/pubkeys/root') }}"
+      exclusive: True
+  - name: Add SSH keys (sami)
+    ansible.posix.authorized_key:
+      user: sami
+      key: "{{ lookup('file', 'files/pubkeys/sami') }}"
+      exclusive: True
