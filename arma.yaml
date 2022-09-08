@@ -1,0 +1,41 @@
+---
+- name: Install steamcmd and Arma
+  hosts: arma
+  become: yes
+  become_user: "{{ user }}"
+  
+  vars:
+    user: arma
+    home: "/srv/{{ user }}"
+
+  tasks:
+  - name: Create user
+    become: yes
+    become_user: root
+    ansible.builtin.user:
+      name: "{{ user }}"
+      system: yes
+      home: "{{ home }}"
+  - name: Clone server handling repo
+    ansible.builtin.git:
+      repo: https://github.com/zeusops/server-handling.git
+      dest: "{{ home }}/server-handling"
+  - name: Symlinks
+    ansible.builtin.file:
+      src: "{{ home }}/server-handling"
+      dest: "{{ home }}/files"
+      state: link
+  - name: Install steamcmd
+    become: yes
+    become_user: root
+    import_role:
+      name: lutangar.steamcmd
+    vars:
+      # FIXME: this doesn't actually override the variable as expected, had to
+      # truncate vars/Debian.yml in the role for this to apply
+      steamcmd_packages:
+      - lib32gcc-s1
+      steamcmd_create_user: no
+      steamcmd_user: "{{ user }}"
+      steamcmd_user_home: "{{ home }}/"
+      steamcmd_directory: "{{ home }}/steamcmd/"
