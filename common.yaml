@@ -2,6 +2,11 @@
 - name: Common setup
   hosts: all
 
+  vars:
+    users:
+      - sami
+      - root
+
   tasks:
   - name: Install zsh
     ansible.builtin.apt:
@@ -35,16 +40,12 @@
       git_config_users:
       - sami
       - root
-  - name: Add SSH keys (root)
+  - name: Add SSH keys
     ansible.posix.authorized_key:
-      user: root
-      key: "{{ lookup('file', 'files/pubkeys/root') }}"
+      user: "{{ item }}"
+      key: "{{ lookup('file', 'files/pubkeys/{{ item }}') }}"
       exclusive: True
-  - name: Add SSH keys (sami)
-    ansible.posix.authorized_key:
-      user: sami
-      key: "{{ lookup('file', 'files/pubkeys/sami') }}"
-      exclusive: True
+    loop: "{{ users }}"
   - name: Set vim as editor
     community.general.alternatives:
       name: editor
