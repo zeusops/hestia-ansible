@@ -20,30 +20,21 @@
     ansible.builtin.user:
       name: sami
       shell: /usr/bin/zsh
-  - name: Set git username (root)
-    community.general.git_config:
-      scope: global
-      name: user.name
-      value: Sami Laine
-  - name: Set git username (sami)
+  - name: Set git configs
     become: true
-    become_user: sami
+    become_user: "{{ item.0 }}"
     community.general.git_config:
       scope: global
-      name: user.name
-      value: Sami Laine
-  - name: Set git email (root)
-    community.general.git_config:
-      scope: global
-      name: user.email
-      value: sami.v.laine@gmail.com
-  - name: Set git email (sami)
-    become: true
-    become_user: sami
-    community.general.git_config:
-      scope: global
-      name: user.email
-      value: sami.v.laine@gmail.com
+      name: "{{ item.1.config }}"
+      value: "{{ item.1.value }}"
+    loop: "{{ git_config_users|product(git_configs)|list }}"
+    vars:
+      git_configs:
+      - { config: user.name,  value: Sami Laine }
+      - { config: user.email, value: sami.v.laine@gmail.com }
+      git_config_users:
+      - sami
+      - root
   - name: Add SSH keys (root)
     ansible.posix.authorized_key:
       user: root
