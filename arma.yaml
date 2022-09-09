@@ -16,6 +16,11 @@
       name: "{{ user }}"
       system: yes
       home: "{{ home }}"
+      shell: /bin/bash
+  - name: Set PATH
+    ansible.builtin.lineinfile:
+      path: "{{ home }}/.bashrc"
+      line: "PATH={{ repodir }}/bin:$PATH"
   - name: Clone server handling repo
     ansible.builtin.git:
       repo: https://github.com/zeusops/server-handling.git
