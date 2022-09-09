@@ -30,6 +30,11 @@
     copy: no
   when: stat_steamcmd_result.stat.exists == False
 
+- name: remove archive
+  file:
+    name: "{{ steamcmd_directory }}steamcmd_linux.tar.gz"
+    state: absent
+
 - name: attempt to log into steam anonymously
   command: "{{ steamcmd_directory }}steamcmd.sh +quit"
   async: "{{ steamcmd_login_timeout}}"
