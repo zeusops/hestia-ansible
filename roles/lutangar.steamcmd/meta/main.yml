@@ -1,0 +1,37 @@
+galaxy_info:
+  author: lutangar
+  description: Setup and install the Steam command-line client.
+  license: license MIT
+  
+  min_ansible_version: 2.0
+
+  platforms:
+  - name: EL # RedHat/CentOS
+    versions:
+    - 6
+    - 7
+  - name: Fedora
+    versions:
+    - 21
+    - 22
+  - name: opensuse
+    versions:
+    - 13.1
+    - 13.2
+  - name: Ubuntu
+    versions:
+    - precise # 12.04 LTS
+    - trusty # 14.04 LTS
+    - vivid # 15.04
+  - name: Debian
+    versions:
+    - wheezy # 7.0
+    - jessie # 8.0
+  galaxy_tags:
+    - steam
+    - steamcmd
+    - game
+    - gaming
+    - dedicatedserver
+
+dependencies: []
