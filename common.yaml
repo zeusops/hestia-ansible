@@ -8,13 +8,14 @@
       - root
 
   tasks:
-  - name: Install zsh
+  - name: Install packages
     ansible.builtin.apt:
       name:
         - zsh
         - git
         - tmux
         - byobu
+        - ufw
       update_cache: true
   - name: Set git default branch
     community.general.git_config:
@@ -50,3 +51,11 @@
     community.general.alternatives:
       name: editor
       path: /usr/bin/vim.basic
+  - name: Enable ufw
+    community.general.ufw:
+      state: enabled
+      policy: reject
+  - name: Allow SSH
+    community.general.ufw:
+      rule: allow
+      name: OpenSSH
