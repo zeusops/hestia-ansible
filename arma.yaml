@@ -7,6 +7,21 @@
   vars:
     user: arma
     home: "/srv/{{ user }}"
+    server: "{{ home }}/server"
+    repodir: "{{ server }}/server-handling"
+    steam_dir: "{{ home }}/steamcmd"
+    steam_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          36383861316535363530346361643439373262343438643365323236656430633461616164353930
+          3438373433636666356566343034613033393535383464330a333834353539646565383361383236
+          65396537366465636232366563656166356132633838366465666132656338323834626162313436
+          3365326635353837320a356261633236623732366632336232646135616265303364633730376130
+          3066
+    repos:
+    - { name: server-handling, dest: "{{ repodir }}" }
+    - { name: modlists, dest: "{{ repodir }}/modlists" }
+    - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
+
 
   tasks:
   - name: Create user
@@ -17,19 +32,92 @@
       system: yes
       home: "{{ home }}"
       shell: /bin/bash
+  - name: Install rename
+    become: yes
+    become_user: root
+    ansible.builtin.apt:
+      name: rename
+      update_cache: yes
   - name: Set PATH
     ansible.builtin.lineinfile:
       path: "{{ home }}/.bashrc"
-      line: "PATH={{ repodir }}/bin:$PATH"
-  - name: Clone server handling repo
-    ansible.builtin.git:
-      repo: https://github.com/zeusops/server-handling.git
-      dest: "{{ home }}/server-handling"
-  - name: Symlinks
+      line: "{{ item }}"
+    loop:
+    - "PATH={{ repodir }}/bin:$PATH"
+    - "export STEAM_DIR={{ steam_dir }}"
+  - name: Set git configs
+    community.general.git_config:
+      scope: global
+      name: "{{ item.config }}"
+      value: "{{ item.value }}"
+    loop:
+    - { config: user.name,  value: Sami Laine }
+    - { config: user.email, value: sami.v.laine@gmail.com }
+
+  - name: Create SSH directory
     ansible.builtin.file:
-      src: "{{ home }}/server-handling"
-      dest: "{{ home }}/files"
+      path: "{{ home }}/.ssh"
+      state: directory
+  - name: Install SSH dependency
+    ansible.builtin.pip:
+      name: stormssh
+  - name: Generate SSH deploy keys
+    community.crypto.openssh_keypair:
+      type: ed25519
+      path: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
+      comment: "{{ user }}@{{ ansible_hostname }} ({{ item.name }})"
+    loop: "{{ repos }}"
+    register: sshkey
+  - name: Print keys
+    #when: sshkey.changed
+    # TODO: format this in a more beautiful way
+    debug:
+      #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
+      msg: "SSH key: {{ item }}"
+    loop: "{{ sshkey | json_query('results[*].[public_key, comment]') | json_query(\"[*].join(' ', @)\")  }}"
+    loop_control:
+      label: 'key'
+  - name: Prompt to add deploy keys
+    #when: sshkey.changed
+    ansible.builtin.pause:
+      prompt: "add the above keys to GitHub before continuing"
+
+  - name: Create SSH configs
+    community.general.ssh_config:
+      user: "{{ user }}"
+      host: "github.com-{{ item.name }}"
+      hostname: github.com
+      identity_file: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
+    loop: "{{ repos }}"
+
+  - name: Clone repos
+    ansible.builtin.git:
+      repo: "git@github.com-{{ item.name }}:zeusops/{{ item.name }}.git"
+      dest: "{{ item.dest }}"
+      accept_newhostkey: yes
+      version: hestia
+    loop: "{{ repos }}"
+  - name: Install workshop-notifier dependencies
+    ansible.builtin.pip:
+      requirements: "{{ repodir }}/bin/internal/workshop-checker/requirements.txt"
+      virtualenv: "{{ repodir }}/bin/internal/workshop-checker/venv"
+  - name: Symlink server-handling
+    ansible.builtin.file:
+      src: "{{ repodir }}"
+      dest: "{{ item }}"
       state: link
+    loop:
+     - "{{ home }}/files"
+     - "{{ server }}/files"
+  - name: Other symlinks
+    ansible.builtin.file:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      state: link
+    loop:
+    - { src: "{{ server }}/link", dest: "{{ home }}/link" }
+    - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
+
   - name: Install steamcmd
     become: yes
     become_user: root
@@ -43,13 +131,7 @@
       steamcmd_create_user: no
       steamcmd_user: "{{ user }}"
       steamcmd_user_home: "{{ home }}/"
-      steamcmd_directory: "{{ home }}/steamcmd/"
+      steamcmd_directory: "{{ steam_dir }}/"
       steamcmd_steam:
         username: zeusoperations
-        password: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          36383861316535363530346361643439373262343438643365323236656430633461616164353930
-          3438373433636666356566343034613033393535383464330a333834353539646565383361383236
-          65396537366465636232366563656166356132633838366465666132656338323834626162313436
-          3365326635353837320a356261633236623732366632336232646135616265303364633730376130
-          3066
+        password: "{{ steam_password }}"
