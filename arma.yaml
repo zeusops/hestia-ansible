@@ -91,7 +91,7 @@
     loop: "{{ repos }}"
     register: sshkey
   - name: Print keys
-    #when: sshkey.changed
+    when: sshkey.changed
     # TODO: format this in a more beautiful way
     debug:
       #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
@@ -100,7 +100,7 @@
     loop_control:
       label: 'key'
   - name: Prompt to add deploy keys
-    #when: sshkey.changed
+    when: sshkey.changed
     ansible.builtin.pause:
       prompt: "add the above keys to GitHub before continuing"
 
