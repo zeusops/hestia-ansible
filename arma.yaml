@@ -21,6 +21,7 @@
     - { name: server-handling, dest: "{{ repodir }}" }
     - { name: modlists, dest: "{{ repodir }}/modlists" }
     - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
+    - { name: userconfig, dest: "{{ home }}/link/userconfig" }
 
 
   tasks:
