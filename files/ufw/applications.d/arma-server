@@ -1,0 +1,4 @@
+[Arma]
+title=Multiple Arma servers
+description=Arma servers
+ports=2301:2310,2402:2410,2502:2510,2602:2610/udp

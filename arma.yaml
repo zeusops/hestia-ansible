@@ -22,6 +22,8 @@
     - { name: modlists, dest: "{{ repodir }}/modlists" }
     - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
     - { name: userconfig, dest: "{{ home }}/link/userconfig" }
+    ufw_apps:
+    - { file: arma-server, app: Arma }
 
 
   tasks:
@@ -39,6 +41,25 @@
     ansible.builtin.apt:
       name: rename
       update_cache: yes
+
+  # UFW
+  # TODO: move into a role
+  - name: Install UFW apps
+    become: yes
+    become_user: root
+    ansible.builtin.copy:
+      src: "files/ufw/applications.d/{{ item.file }}"
+      dest: "/etc/ufw/applications.d/{{ item.file }}"
+    loop: "{{ ufw_apps }}"
+  - name: Enable UFW rules
+    become: yes
+    become_user: root
+    community.general.ufw:
+      rule: allow
+      name: "{{ item.app }}"
+    loop: "{{ ufw_apps }}"
+
+
   - name: Set PATH
     ansible.builtin.lineinfile:
       path: "{{ home }}/.bashrc"
