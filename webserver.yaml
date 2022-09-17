@@ -11,3 +11,7 @@
     ansible.builtin.apt:
       name: nginx
       update_cache: true
+  - name: Allow nginx through the firewall
+    community.general.ufw:
+      rule: allow
+      name: Nginx Full
