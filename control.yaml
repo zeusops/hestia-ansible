@@ -1,0 +1,54 @@
+---
+- name: Control node
+  hosts: control
+
+  vars:
+    home: /root
+    user: root
+    repos:
+    - { name: ansible, url: Gehock/hestia-ansible.git, dest: "{{ home }}/ansible" }
+
+  tasks:
+  - name: Create SSH directory
+    ansible.builtin.file:
+      path: "{{ home }}/.ssh"
+      state: directory
+  - name: Install SSH dependency
+    ansible.builtin.pip:
+      name: stormssh
+  - name: Generate SSH deploy keys
+    community.crypto.openssh_keypair:
+      type: ed25519
+      path: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
+      comment: "{{ user }}@{{ ansible_hostname }} ({{ item.name }})"
+    loop: "{{ repos }}"
+    register: sshkey
+  - name: Print keys
+    when: sshkey.changed
+    # TODO: format this in a more beautiful way
+    debug:
+      #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
+      msg: "SSH key: {{ item }}"
+    loop: "{{ sshkey | json_query('results[*].[public_key, comment]') | json_query(\"[*].join(' ', @)\")  }}"
+    loop_control:
+      label: 'key'
+  - name: Prompt to add deploy keys
+    when: sshkey.changed
+    ansible.builtin.pause:
+      prompt: "add the above keys to GitHub before continuing"
+
+  - name: Create SSH configs
+    community.general.ssh_config:
+      user: "{{ user }}"
+      host: "github.com-{{ item.name }}"
+      hostname: github.com
+      identity_file: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
+    loop: "{{ repos }}"
+
+  - name: Clone repos
+    ansible.builtin.git:
+      repo: "git@github.com-{{ item.name }}:{{ item.url | d(\"zeusops/{{ item.name }}.git\") }}"
+      dest: "{{ item.dest }}"
+      accept_newhostkey: yes
+      update: no
+    loop: "{{ repos }}"
