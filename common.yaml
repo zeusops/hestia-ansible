@@ -16,6 +16,7 @@
         - tmux
         - byobu
         - ufw
+        - fail2ban
       update_cache: true
   - name: Set git default branch
     community.general.git_config:
@@ -59,3 +60,8 @@
     community.general.ufw:
       rule: allow
       name: OpenSSH
+  - name: Start fail2ban
+    ansible.builtin.systemd:
+      state: started
+      enabled: yes
+      name: fail2ban
