@@ -6,6 +6,16 @@
     - { name: missionbot,   description: Mission bot,   module: null, file: config.py }
     #- { name: operationbot, description: Operation bot, module: null, file: secret.py }
     #- { name: zeusopsbot,   description: Zeusops bot,   module: bot,  file: config_local.yaml }
+    tokens:
+      missionbot: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        63643663323136386139353239656366326536383962666237333438316665366333656162346533
+        6161633839633132363363343230373237643130366438330a666264623339326537393064306334
+        34376464643331633337363163313937356239366335623832616162366263373730633735393030
+        3230343432653565640a363632626436633232313565376265663137356236633638366333333435
+        65663032636436373165336134346166376530336333626536363262343430613162633233646263
+        61373462346662666139623462383034343966356461373735366466303233393739616430643164
+        623938633665366134373434633832386566
 
   #roles:
   #- role: systemd_service
@@ -37,9 +47,10 @@
       virtualenv: "/srv/{{ item.name }}/venv"
     loop: "{{ bots }}"
   - name: Create bot configs
+    # TODO: Reload bot automatically when config changes
     become: yes
     become_user: "{{ item.name }}"
-    ansible.builtin.copy:
+    ansible.builtin.template:
       src: "files/bots/config/{{ item.name }}.{{ item.file }}"
       dest: "/srv/{{ item.name }}/{{ item.name }}/{{ item.file }}"
     loop: "{{ bots }}"
