@@ -3,7 +3,7 @@
   hosts: arma
   become: yes
   become_user: "{{ user }}"
-  
+
   vars:
     user: arma
     home: "/srv/{{ user }}"
@@ -21,7 +21,7 @@
     - { name: server-handling, dest: "{{ repodir }}" }
     - { name: modlists, dest: "{{ repodir }}/modlists" }
     - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
-    - { name: userconfig, dest: "{{ home }}/link/userconfig" }
+    - { name: userconfig, dest: "{{ server }}/link/userconfig" }
     ufw_apps:
     - { file: arma-server, app: Arma }
 
