@@ -125,6 +125,9 @@
       dest: "{{ item.dest }}"
       accept_newhostkey: yes
       version: hestia
+      # Submodules are cloned manually because we want to set the SSH remote
+      # address instead of HTTPS
+      recursive: no
     loop: "{{ repos }}"
   - name: Install workshop-notifier dependencies
     ansible.builtin.pip:
