@@ -61,6 +61,51 @@
       name: "{{ item.name }}"
     loop: "{{ bots }}"
 
+  - name: Install extractpbo dependencies
+    ansible.builtin.apt:
+      name:
+      - liblzo2-2
+      - libvorbis0a
+      - libvorbisfile3
+      - libvorbisenc2
+      - libogg0
+      - libuchardet0
+      update_cache: true
+  - name: Check if extractpbo exists
+    ansible.builtin.stat:
+      path: /usr/local/bin/extractpbo
+    register: extractpbo
+  - ansible.builtin.tempfile:
+      state: file
+      suffix: .tgz
+    register: downloaded_file
+    when: not extractpbo.stat.exists
+  - name: Download depbotools
+    ansible.builtin.get_url:
+      url: "https://mikero.bytex.digital/api/download?filename=depbo-tools-0.8.91-linux-amd64.tgz"
+      dest: "{{ downloaded_file.path }}"
+      checksum: sha256:256698f38acf561e3ee3871542cd34740652275b681bfc13b8cd7e12112c858d
+    when: downloaded_file is changed
+  - name: Extract depbotools
+    ansible.builtin.unarchive:
+      src: "{{ downloaded_file.path }}"
+      remote_src: yes
+      dest: /usr/local
+      extra_opts:
+      - --strip-components=1
+      - --exclude=readme-linux.txt
+    when: downloaded_file is changed
+  - ansible.builtin.file:
+      state: absent
+      path: "{{ downloaded_file.path }}"
+    when: downloaded_file is changed
+  - name: Add libdepbo to ldconfig
+    ansible.builtin.copy:
+      dest: /etc/ld.so.conf.d/libdepbo.conf
+      content: /usr/local/lib
+    when: downloaded_file is changed
+    notify: Run ldconfig
+
   # TODO: Make this portable across hosts (mount?)
   - name: Create mission upload group
     ansible.builtin.group:
@@ -76,3 +121,5 @@
   - name: Reload systemd
     ansible.builtin.systemd:
       daemon_reload: yes
+  - name: Run ldconfig
+    ansible.builtin.command: ldconfig
