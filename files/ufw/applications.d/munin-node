@@ -1,0 +1,4 @@
+[munin-node]
+title=munin-node
+description=munin-node
+ports=4949/tcp

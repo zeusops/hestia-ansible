@@ -1,0 +1,4 @@
+[TS3]
+title=TeamSpeak 3
+description=Voice (9987), ServerQuery raw (10011), ServerQuery SSH (10022), Filetransfer (30033)
+ports=9987/udp|10011,10022,30033/tcp

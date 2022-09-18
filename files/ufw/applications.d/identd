@@ -1,0 +1,4 @@
+[identd]
+title=ident daemon
+description=Ident daemon
+ports=113/tcp

@@ -1,0 +1,4 @@
+[minecraft]
+title=Minecraft
+description=Three servers
+ports=25565:25567/tcp

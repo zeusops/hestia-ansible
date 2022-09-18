@@ -1,0 +1,4 @@
+[rdp]
+title=RDP
+description=RDP
+ports=3389/tcp
