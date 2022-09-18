@@ -22,17 +22,23 @@
       home: "/srv/{{ item.name }}"
     loop: "{{ bots }}"
   - name: Clone bot repos
+    become: yes
+    become_user: "{{ item.name }}"
     ansible.builtin.git:
       repo: 'https://github.com/zeusops/{{ item.name }}.git'
       dest: "/srv/{{ item.name }}/{{ item.name }}"
     loop: "{{ bots }}"
   - name: Install bot dependencies
     # TODO: make bots directly installable with pip
+    become: yes
+    become_user: "{{ item.name }}"
     ansible.builtin.pip:
       requirements: "/srv/{{ item.name }}/{{ item.name }}/requirements.txt"
       virtualenv: "/srv/{{ item.name }}/venv"
     loop: "{{ bots }}"
   - name: Create bot configs
+    become: yes
+    become_user: "{{ item.name }}"
     ansible.builtin.copy:
       src: "files/bots/config/{{ item.name }}.{{ item.file }}"
       dest: "/srv/{{ item.name }}/{{ item.name }}/{{ item.file }}"
