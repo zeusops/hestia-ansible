@@ -55,6 +55,17 @@
       name: "{{ item.name }}"
     loop: "{{ bots }}"
 
+  # TODO: Make this portable across hosts (mount?)
+  - name: Create mission upload group
+    ansible.builtin.group:
+      name: mission_upload
+  - name: Add missionbot to upload group
+    ansible.builtin.user:
+      name: missionbot
+      groups: mission_upload
+      append: yes
+
+
   handlers:
   - name: Reload systemd
     ansible.builtin.systemd:

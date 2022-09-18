@@ -27,6 +27,11 @@
 
 
   tasks:
+  - name: Create mission upload group
+    become: yes
+    become_user: root
+    ansible.builtin.group:
+      name: mission_upload
   - name: Create user
     become: yes
     become_user: root
@@ -35,6 +40,8 @@
       system: yes
       home: "{{ home }}"
       shell: /bin/bash
+      groups: mission_upload
+      append: yes
   - name: Install rename
     become: yes
     become_user: root
@@ -157,3 +164,15 @@
       steamcmd_steam:
         username: zeusoperations
         password: "{{ steam_password }}"
+
+  - name: Set mpmissions permissions
+    ansible.builtin.file:
+      path: "{{ server }}/link/mpmissions"
+      state: directory
+      mode: 02770
+      group: mission_upload
+  - name: Set home permissions
+    ansible.builtin.file:
+      path: "{{ home }}"
+      state: directory
+      mode: "o+x"
