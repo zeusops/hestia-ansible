@@ -23,11 +23,13 @@
     - { name: modlists, dest: "{{ repodir }}/modlists" }
     - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
     - { name: userconfig, dest: "{{ link }}/userconfig" }
+    - { name: poseidon-profiles, dest: "{{ link }}/profiles", branch: main }
     ufw_apps:
     - { file: arma-server, app: Arma }
     symlinks:
     - { src: "{{ link }}", dest: "{{ home }}/link" }
     - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
+    - { src: "{{ link }}/profiles", dest: "{{ home }}/.local/share/Arma 3 - Other Profiles" }
 
 
   tasks:
