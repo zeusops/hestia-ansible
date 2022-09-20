@@ -128,7 +128,7 @@
       repo: "git@github.com-{{ item.name }}:zeusops/{{ item.name }}.git"
       dest: "{{ item.dest }}"
       accept_newhostkey: yes
-      version: hestia
+      version: "{{ item.branch | d('hestia') }}"
       # Submodules are cloned manually because we want to set the SSH remote
       # address instead of HTTPS
       recursive: no
