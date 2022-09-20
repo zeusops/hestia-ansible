@@ -25,6 +25,7 @@
         letsencrypt_email: webmaster@zeusops.com
 
   tasks:
+  # === General ===
   - name: Remove apache
     ansible.builtin.apt:
       name: apache2
@@ -38,6 +39,7 @@
       rule: allow
       name: Nginx Full
 
+  # === Webhook ===
   - name: Create user
     ansible.builtin.user:
       name: "{{ webhook.user }}"
@@ -96,12 +98,17 @@
       # address instead of HTTPS
       #recursive: no
 
+  - name: Check if unit file exists
+    ansible.builtin.stat:
+      path: "/etc/systemd/system/{{ webhook.user }}.service"
+    register: service
   - name: Fetch template
     run_once: yes
     ansible.builtin.fetch:
       src: "{{ webhook.dest }}/systemd/webhook.service.j2"
       dest: /tmp/webhook.service.j2
       flat: yes
+    when: not service.stat.exists
   - name: Create systemd service
     ansible.builtin.template:
       src: /tmp/webhook.service.j2
@@ -110,6 +117,7 @@
       dir: "{{ webhook.dest }}"
     notify:
     - Reload systemd
+    when: not service.stat.exists
   - name: Run webhook
     ansible.builtin.systemd:
       state: started
