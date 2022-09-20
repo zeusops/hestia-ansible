@@ -1,0 +1,14 @@
+[Unit]
+Description=TeamSpeak 3 Server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User={{ user }}
+Group={{ group }}
+WorkingDirectory={{ dir }}
+ExecStart={{ dir }}/ts3server_minimal_runscript.sh
+SyslogIdentifier={{ syslog_identifier | d('ts3server') }}
+
+[Install]
+WantedBy=multi-user.target

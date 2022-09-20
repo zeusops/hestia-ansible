@@ -1,0 +1,110 @@
+---
+- name: Create user
+  hosts: teamspeak
+
+  vars:
+    user: teamspeak
+    group: "{{ user }}"
+    home: /srv/{{ user }}
+
+  tasks:
+  - name: Create user
+    become: yes
+    ansible.builtin.user:
+      name: "{{ user }}"
+      system: yes
+      home: "{{ home }}"
+    
+- name: Set up TS3 server
+  hosts: teamspeak
+  become: yes
+  become_user: "{{ user }}"
+
+  vars:
+    user: teamspeak
+    group: "{{ user }}"
+    home: /srv/{{ user }}
+    dir: "{{ home }}/server"
+
+  tasks:
+  #- name: Create mission upload group
+  #  ansible.builtin.group:
+  #    name: mission_upload
+  #- name: Create user
+  #  become: yes
+  #  ansible.builtin.user:
+  #    name: "{{ user }}"
+  #    system: yes
+  #    home: "{{ home }}"
+  #- name: Add missionbot to upload group
+  #  ansible.builtin.user:
+  #    name: missionbot
+  #    groups: mission_upload
+  #    append: yes
+  - name: Check if server exists
+    ansible.builtin.stat:
+      path: "{{ home }}/server/ts3server"
+    register: ts3
+  - ansible.builtin.tempfile:
+      state: file
+      suffix: .bz2
+    register: downloaded_file
+    when: not ts3.stat.exists
+  - name: Download TS3 server
+    ansible.builtin.get_url:
+      url: "https://files.teamspeak-services.com/releases/server/3.13.7/teamspeak3-server_linux_amd64-3.13.7.tar.bz2"
+      dest: "{{ downloaded_file.path }}"
+      checksum: sha256:775a5731a9809801e4c8f9066cd9bc562a1b368553139c1249f2a0740d50041e
+    when: downloaded_file is changed
+  - ansible.builtin.file:
+      state: directory
+      path: "{{ dir }}"
+  - name: Extract TS3 server
+    ansible.builtin.unarchive:
+      src: "{{ downloaded_file.path }}"
+      remote_src: yes
+      dest: "{{ dir }}"
+      extra_opts:
+      - --strip-components=1
+    when: downloaded_file is changed
+  - ansible.builtin.file:
+      state: absent
+      path: "{{ downloaded_file.path }}"
+    when: downloaded_file is changed
+  - name: Create license file
+    ansible.builtin.file:
+      state: touch
+      path: "{{ dir }}/.ts3server_license_accepted"
+      modification_time: preserve
+      access_time: preserve
+  - name: Create service
+    become: yes
+    become_user: root
+    ansible.builtin.template:
+      src: files/teamspeak/systemd.service.j2
+      dest: /etc/systemd/system/{{ user }}.service
+    #vars:
+    #  user: "{{ user }}"
+    #  description: "{{ item.description }}"
+    #  module: "{{ item.module }}"
+    notify:
+    - Reload systemd
+  - name: Run TS3
+    become: yes
+    become_user: root
+    ansible.builtin.systemd:
+      state: started
+      enabled: yes
+      name: "{{ user }}"
+  - ansible.builtin.debug:
+      msg: >-
+        If this is a new installation of TS3, remember to save the serveradmin
+        token from the server's stdout (journal)
+    when: downloaded_file is changed
+
+  handlers:
+  - name: Reload systemd
+    become: yes
+    become_user: root
+    ansible.builtin.systemd:
+      daemon_reload: yes
