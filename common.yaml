@@ -19,6 +19,8 @@
         - fail2ban
         - etckeeper
         - ncdu
+        - aptitude
+        - apt-file
       update_cache: true
   - name: Set git default branch
     community.general.git_config:
