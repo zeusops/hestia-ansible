@@ -25,6 +25,9 @@
     - { name: userconfig, dest: "{{ link }}/userconfig" }
     ufw_apps:
     - { file: arma-server, app: Arma }
+    symlinks:
+    - { src: "{{ link }}", dest: "{{ home }}/link" }
+    - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
 
 
   tasks:
@@ -147,9 +150,7 @@
       src: "{{ item.src }}"
       dest: "{{ item.dest }}"
       state: link
-    loop:
-    - { src: "{{ link }}", dest: "{{ home }}/link" }
-    - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
+    loop: "{{ symlinks }}"
 
   - name: Install steamcmd
     become: yes
