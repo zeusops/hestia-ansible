@@ -2,6 +2,10 @@
 - name: Install nginx
   hosts: web
 
+  vars:
+    homedir: /srv
+    webhook: { user: webhook, name: git.zeusops.com, dest: "{{ homedir }}/webhook/webhook", gh_user: Gehock }
+
   tasks:
   - name: Remove apache
     ansible.builtin.apt:
@@ -15,3 +19,86 @@
     community.general.ufw:
       rule: allow
       name: Nginx Full
+
+  - name: Create user
+    ansible.builtin.user:
+      name: "{{ webhook.user }}"
+      system: yes
+      home: "{{ homedir }}/{{ webhook.user }}"
+  - name: Create SSH directory
+    become: yes
+    become_user: "{{ webhook.user }}"
+    ansible.builtin.file:
+      path: "{{ homedir }}/{{ webhook.user }}/.ssh"
+      state: directory
+  - name: Install SSH dependency
+    ansible.builtin.pip:
+      name: stormssh
+  - name: Generate SSH deploy key
+    become: yes
+    become_user: "{{ webhook.user }}"
+    community.crypto.openssh_keypair:
+      type: ed25519
+      path: "{{ homedir }}/{{ webhook.user }}/.ssh/{{ webhook.name }}_deploy_key"
+      comment: "{{ webhook.user }}@{{ ansible_hostname }}#{{ webhook.name }}"
+    # TODO: make sshkey parser support a single item below
+    loop: [1]
+    register: sshkey
+  - name: Print key
+    when: sshkey.changed
+    # TODO: format this in a more beautiful way
+    debug:
+      #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
+      msg: "SSH key: {{ item }}"
+    loop: "{{ sshkey | json_query('results[*].[public_key, comment]') | json_query(\"[*].join(' ', @)\")  }}"
+    loop_control:
+      label: 'key'
+  - name: Prompt to add deploy key
+    when: sshkey.changed
+    ansible.builtin.pause:
+      prompt: "add the above keys to GitHub before continuing"
+
+  - name: Create SSH config
+    become: yes
+    become_user: "{{ webhook.user }}"
+    community.general.ssh_config:
+      user: "{{ webhook.user }}"
+      host: "github.com-{{ webhook.name }}"
+      hostname: github.com
+      identity_file: "{{ homedir }}/{{ webhook.user }}/.ssh/{{ webhook.name }}_deploy_key"
+
+  - name: Clone repo
+    become: yes
+    become_user: "{{ webhook.user }}"
+    ansible.builtin.git:
+      repo: "git@github.com-{{ webhook.name }}:{{ webhook.gh_user | d('zeusops') }}/{{ webhook.name }}.git"
+      dest: "{{ webhook.dest }}"
+      accept_newhostkey: yes
+      # Submodules are cloned manually because we want to set the SSH remote
+      # address instead of HTTPS
+      #recursive: no
+
+  - name: Fetch template
+    run_once: yes
+    ansible.builtin.fetch:
+      src: "{{ webhook.dest }}/systemd/webhook.service.j2"
+      dest: /tmp/webhook.service.j2
+      flat: yes
+  - name: Create systemd service
+    ansible.builtin.template:
+      src: /tmp/webhook.service.j2
+      dest: "/etc/systemd/system/{{ webhook.user }}.service"
+    vars:
+      dir: "{{ webhook.dest }}"
+    notify:
+    - Reload systemd
+  - name: Run webhook
+    ansible.builtin.systemd:
+      state: started
+      enabled: yes
+      name: "{{ webhook.user }}"
+
+  handlers:
+  - name: Reload systemd
+    ansible.builtin.systemd:
+      daemon_reload: yes
