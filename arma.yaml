@@ -9,6 +9,7 @@
     home: "/srv/{{ user }}"
     server: "{{ home }}/server"
     repodir: "{{ server }}/server-handling"
+    link: "{{ server }}/link"
     steam_dir: "{{ home }}/steamcmd"
     steam_password: !vault |
           $ANSIBLE_VAULT;1.1;AES256
@@ -21,7 +22,7 @@
     - { name: server-handling, dest: "{{ repodir }}" }
     - { name: modlists, dest: "{{ repodir }}/modlists" }
     - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
-    - { name: userconfig, dest: "{{ server }}/link/userconfig" }
+    - { name: userconfig, dest: "{{ link }}/userconfig" }
     ufw_apps:
     - { file: arma-server, app: Arma }
 
@@ -147,7 +148,7 @@
       dest: "{{ item.dest }}"
       state: link
     loop:
-    - { src: "{{ server }}/link", dest: "{{ home }}/link" }
+    - { src: "{{ link }}", dest: "{{ home }}/link" }
     - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
 
   - name: Install steamcmd
@@ -170,7 +171,7 @@
 
   - name: Set mpmissions permissions
     ansible.builtin.file:
-      path: "{{ server }}/link/mpmissions"
+      path: "{{ link }}/mpmissions"
       state: directory
       mode: 02770
       group: mission_upload
