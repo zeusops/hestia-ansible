@@ -8,6 +8,7 @@
   vars:
     homedir: /srv
     webhook: { user: webhook, name: git.zeusops.com, dest: "{{ homedir }}/webhook/webhook", gh_user: Gehock }
+    www_dir: /var/www
 
     nginx_revproxy_sites:
       #default:
@@ -23,6 +24,41 @@
         ssl: true
         letsencrypt: true
         letsencrypt_email: webmaster@zeusops.com
+    # Without these the revproxy role will remove manually managed sites
+    nginx_revproxy_remove_webroot_sites: no
+    nginx_revproxy_de_activate_sites: no
+    redirects:
+    - [doc, "https://docs.google.com/document/d/1NKLi_VazqMgpnZYHa6FDOQbZyfqLDPosi4xdOQPgHMU/edit?usp=sharing"]
+    - [rules, "https://docs.google.com/document/d/1DWK53LF3AjRqxZkb4qQXeBBvtSIOtamnUXyk2b6aaAs/edit?usp=sharing"]
+    - [zeus, "https://docs.google.com/document/d/1PFK__UcgmAJ1P3xBnJxeW2ow7u8bgEfM8lkpHJrLYDU/edit?usp=sharing"]
+    - [template, "https://github.com/zeusops/mission-templates"]
+    - [discord, "https://discord.gg/UAgPN7j"]
+    - [units, "https://units.arma3.com/unit/zeusops"]
+    - [attendance, "https://docs.google.com/spreadsheets/d/1obK3_FU5yMzhBgFLmk3g0v5dn5wFqT30RQXHWCAccCQ/edit"]
+    - [allattendance, "/all"]
+    - [all, "https://docs.google.com/spreadsheets/d/1Blc0MwWPSgKfWQ1KruEhxQ8T-z3Ig1Y0RqDh_ntCWZo/edit"]
+    - [mod, "https://steamcommunity.com/sharedfiles/filedetails/?id=2168912301"]
+    - [mods, "https://steamcommunity.com/sharedfiles/filedetails/?id=754233724"]
+    - [optional, "/optionals"]
+    - [optionals, "https://steamcommunity.com/sharedfiles/filedetails/?id=1115077330"]
+    - [jointop, "https://steamcommunity.com/sharedfiles/filedetails/?id=1312402629"]
+    - [terrains, "https://steamcommunity.com/sharedfiles/filedetails/?id=1424089214"]
+    - [tsplugin, "/plugin"]
+    - [tsplugins, "/plugin"]
+    - [plugins, "/plugin"]
+    - [plugin, "https://cdn.discordapp.com/attachments/235478105177718785/829774774322200606/task_force_radio.ts3_plugin"]
+    - [feedback, "https://docs.google.com/forms/d/e/1FAIpQLSd_CUC9Bi8pelnJLtK4dKxLyWqHkO_LH8z4MIuCli1JUm0jdQ/viewform"]
+    - [watch, "https://w2g.tv/rooms/zeusoperations-p7wbtfre05cwi65s"]
+    - [anniversary, "https://docs.google.com/spreadsheets/d/1UXULpdp5zB83E72JDGmGrBpNOhtkFkNPoreqh0H8og8/edit#gid=1299351339"]
+    - [points, "https://banner.zeusops.com/image/"]
+    - [co, "https://hackmd.io/@zeusops/Syl2LXL1i"]
+    - [meetings, "https://hackmd.io/MNNjYnckQgSESY5jsf7pFQ?view"]
+    - [review, "https://docs.google.com/forms/d/e/1FAIpQLSfWY53jmyAKsOg12LZw4AqdL40IBynUJBp2I7du7BsmJX4yfQ/viewform"]
+    - [reviewresponses, "https://docs.google.com/spreadsheets/d/1_c2tc22Udwf2Nl-AOQD_qnwGFlULoLnLP7hx8Fns-ZE/edit?usp=sharing"]
+    - [hqresponses, "https://docs.google.com/spreadsheets/d/1BtosRxvotFQJfGNPnw_WuZENEpXtKBhx1v8DXLys25o/edit?usp=sharing"]
+    - [github, "https://github.com/zeusops"]
+    - [coinfo, "https://docs.google.com/document/d/1mYguW7eceldh_mXQreNOOEHtThQ3GCRow4VyzqvrU6c/edit"]
+
 
   tasks:
   # === General ===
@@ -124,7 +160,55 @@
       enabled: yes
       name: "{{ webhook.user }}"
 
+  # === Setup nginx ===
+
+  - name: Remove default site
+    ansible.builtin.file:
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+
+  - name: Copy config
+    ansible.builtin.template:
+      src: files/nginx/nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+    notify:
+    - Reload nginx
+
+  # === zeusops.com ===
+
+  - name: Clone zeusops.com repo
+    ansible.builtin.git:
+      repo: "https://github.com/zeusops/zeusops.com.git"
+      dest: "{{ www_dir }}/www.zeusops.com"
+      accept_newhostkey: yes
+
+  - name: Enable site
+    ansible.builtin.file:
+      src: /etc/nginx/sites-available/www.zeusops.com.conf
+      dest: /etc/nginx/sites-enabled/www.zeusops.com.conf
+      force: yes
+      follow: no
+      state: link
+
+  # TODO: setup TLS cert
+  - name: Copy config
+    ansible.builtin.template:
+      src: files/nginx/site.conf.j2
+      dest: /etc/nginx/sites-available/www.zeusops.com.conf
+    vars:
+      server_name: www.hestia.zeusops.com
+      access_log: /var/log/nginx/{{ server_name }}.log
+      error_log: /var/log/nginx/{{ server_name }}.err
+      root: "{{ www_dir }}/www.zeusops.com/public"
+      #root: "{{ www_dir }}/{{ server_name }}/public"
+    notify:
+    - Reload nginx
+
   handlers:
   - name: Reload systemd
     ansible.builtin.systemd:
       daemon_reload: yes
+  - name: Reload nginx
+    ansible.builtin.service:
+      name: nginx
+      state: restarted
