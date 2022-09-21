@@ -4,7 +4,7 @@
   vars:
     bots:
     - { name: missionbot,   description: Mission bot,   module: null, file: config.py }
-    #- { name: operationbot, description: Operation bot, module: null, file: secret.py }
+    - { name: operationbot, description: Operation bot, module: null, file: secret.py }
     #- { name: zeusopsbot,   description: Zeusops bot,   module: bot,  file: config_local.yaml }
     tokens:
       missionbot: !vault |
@@ -16,7 +16,15 @@
         65663032636436373165336134346166376530336333626536363262343430613162633233646263
         61373462346662666139623462383034343966356461373735366466303233393739616430643164
         623938633665366134373434633832386566
-
+      operationbot: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65343635613035653733396332326130376136333730613963323761323233633135393637303764
+          3337663233663530656461653161363966373637633865330a363665613033333836666532396133
+          63373461323637623431633133303435303635336164663830343333376137353433373331666639
+          3265323061636230630a323062613737653066653338373035356564643331613733646565383136
+          62373734356639386633633061376539663332623430396363323437623730303234373538623133
+          32306666356535396362636565646462666235636265343866333136343037373137623761623330
+          396239633138386361393737663261663131
   #roles:
   #- role: systemd_service
 
@@ -132,6 +140,14 @@
       name: missionbot
       groups: mission_upload
       append: yes
+
+  - name: Create operationbot backup crontab
+    ansible.builtin.cron:
+      name: Back up operationbot events
+      cron_file: backup-operationbot
+      minute: "*/15"
+      user: operationbot
+      job: /srv/operationbot/operationbot/scripts/backup-events.sh > /dev/null
 
 
   handlers:
