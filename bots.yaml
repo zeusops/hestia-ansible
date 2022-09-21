@@ -38,6 +38,8 @@
       repo: 'https://github.com/zeusops/{{ item.name }}.git'
       dest: "/srv/{{ item.name }}/{{ item.name }}"
     loop: "{{ bots }}"
+    register: bot_services
+    notify: Restart bot services
   - name: Install bot dependencies
     # TODO: make bots directly installable with pip
     become: yes
@@ -46,6 +48,8 @@
       requirements: "/srv/{{ item.name }}/{{ item.name }}/requirements.txt"
       virtualenv: "/srv/{{ item.name }}/venv"
     loop: "{{ bots }}"
+    register: bot_services
+    notify: Restart bot services
   - name: Create bot configs
     # TODO: Reload bot automatically when config changes
     become: yes
@@ -54,6 +58,8 @@
       src: "files/bots/config/{{ item.name }}.{{ item.file }}"
       dest: "/srv/{{ item.name }}/{{ item.name }}/{{ item.file }}"
     loop: "{{ bots }}"
+    register: bot_services
+    notify: Restart bot services
   - name: Create bot systemd services
     ansible.builtin.template:
       src: files/bots/systemd.service.j2
@@ -66,7 +72,7 @@
     notify:
     - Reload systemd
   - name: Run bots
-    ansible.builtin.systemd:
+    ansible.builtin.service:
       state: started
       enabled: yes
       name: "{{ item.name }}"
@@ -134,3 +140,9 @@
       daemon_reload: yes
   - name: Run ldconfig
     ansible.builtin.command: ldconfig
+  - name: Restart bot services
+    # https://rolflekang.com/ansible-handlers-in-loops
+    ansible.builtin.service:
+      name: "{{ item }}"
+      state: restarted
+    loop: "{{ bot_services.results | selectattr('changed', 'equalto', true) | map(attribute='item') | map(attribute='name') | list }}"
