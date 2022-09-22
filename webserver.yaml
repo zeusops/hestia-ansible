@@ -196,7 +196,7 @@
       src: files/nginx/site.conf.j2
       dest: /etc/nginx/sites-available/www.zeusops.com.conf
     vars:
-      server_name: www.hestia.zeusops.com
+      server_name: www.zeusops.com
       access_log: /var/log/nginx/{{ server_name }}.log
       error_log: /var/log/nginx/{{ server_name }}.err
       root: "{{ www_dir }}/www.zeusops.com/public"
