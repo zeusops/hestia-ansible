@@ -25,6 +25,8 @@
     group: "{{ user }}"
     home: /srv/{{ user }}
     dir: "{{ home }}/server"
+    ufw_apps:
+    - { file: ts3, app: TS3 }
 
   tasks:
   #- name: Create mission upload group
@@ -101,6 +103,22 @@
         If this is a new installation of TS3, remember to save the serveradmin
         token from the server's stdout (journal)
     when: downloaded_file is changed
+  # UFW
+  # TODO: move into a role
+  - name: Install UFW apps
+    become: yes
+    become_user: root
+    ansible.builtin.copy:
+      src: "files/ufw/applications.d/{{ item.file }}"
+      dest: "/etc/ufw/applications.d/{{ item.file }}"
+    loop: "{{ ufw_apps }}"
+  - name: Enable UFW rules
+    become: yes
+    become_user: root
+    community.general.ufw:
+      rule: allow
+      name: "{{ item.app }}"
+    loop: "{{ ufw_apps }}"
 
   handlers:
   - name: Reload systemd
