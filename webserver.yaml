@@ -27,7 +27,7 @@
     # Without these the revproxy role will remove manually managed sites
     nginx_revproxy_remove_webroot_sites: no
     nginx_revproxy_de_activate_sites: no
-    redirects:
+    zeusopscom_redirects:
     - [doc, "https://docs.google.com/document/d/1NKLi_VazqMgpnZYHa6FDOQbZyfqLDPosi4xdOQPgHMU/edit?usp=sharing"]
     - [rules, "https://docs.google.com/document/d/1DWK53LF3AjRqxZkb4qQXeBBvtSIOtamnUXyk2b6aaAs/edit?usp=sharing"]
     - [zeus, "https://docs.google.com/document/d/1PFK__UcgmAJ1P3xBnJxeW2ow7u8bgEfM8lkpHJrLYDU/edit?usp=sharing"]
@@ -194,13 +194,39 @@
   - name: Copy config
     ansible.builtin.template:
       src: files/nginx/site.conf.j2
-      dest: /etc/nginx/sites-available/www.zeusops.com.conf
+      dest: /etc/nginx/sites-available/{{ server_name }}.conf
     vars:
       server_name: www.zeusops.com
       access_log: /var/log/nginx/{{ server_name }}.log
       error_log: /var/log/nginx/{{ server_name }}.err
-      root: "{{ www_dir }}/www.zeusops.com/public"
-      #root: "{{ www_dir }}/{{ server_name }}/public"
+      root: "{{ www_dir }}/{{ server_name }}/public"
+      redirects: "{{ zeusopscom_redirects }}"
+    notify:
+    - Reload nginx
+
+  # === gehock.dy.fi ===
+
+  # NOTE: site data is currently copied manually to /var/www/gehock.dy.fi
+
+  - name: Enable site
+    ansible.builtin.file:
+      src: /etc/nginx/sites-available/gehock.dy.fi.conf
+      dest: /etc/nginx/sites-enabled/gehock.dy.fi.conf
+      force: yes
+      follow: no
+      state: link
+
+  # NOTE: setup TLS cert
+  - name: Copy config
+    ansible.builtin.template:
+      src: files/nginx/site.conf.j2
+      dest: /etc/nginx/sites-available/{{ server_name }}.conf
+    vars:
+      server_name: gehock.dy.fi
+      access_log: /var/log/nginx/{{ server_name }}.log
+      error_log: /var/log/nginx/{{ server_name }}.err
+      root: "{{ www_dir }}/{{ server_name }}/httpdocs"
+      le: yes
     notify:
     - Reload nginx
 

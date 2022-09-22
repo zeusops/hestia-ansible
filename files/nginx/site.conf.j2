@@ -1,6 +1,6 @@
 server {
-  listen 80 default_server;
-  listen [::]:80 default_server ipv6only=on;
+  listen 80;
+  listen [::]:80;
   server_name {{ server_name }};
   underscores_in_headers on;
 
@@ -14,7 +14,7 @@ server {
 
 server {
   listen 443 ssl;
-  listen [::]:443 ssl ipv6only=on;
+  listen [::]:443 ssl;
   server_name {{ server_name }};
   
   access_log {{ access_log }};
@@ -23,9 +23,17 @@ server {
   root {{ root }};
   index index.html index.htm;
 
-  {% for redirect in redirects %}
-    rewrite ^/{{ redirect[0] }}$ {{ redirect[1] }} redirect;
-  {% endfor %}
+  {% if redirects is defined -%}
+    {% for redirect in redirects -%}
+      rewrite ^/{{ redirect[0] }}$ {{ redirect[1] }} redirect;
+    {% endfor -%}
+  {% endif %}
+
+  {%- if le is defined and le -%}
+
+  ssl_certificate /etc/letsencrypt/live/{{ server_name }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ server_name }}/privkey.pem;
+  {% endif %}
 
   location / {
     try_files $uri $uri/ =404;
