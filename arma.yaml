@@ -23,13 +23,14 @@
     - { name: modlists, dest: "{{ repodir }}/modlists" }
     - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
     - { name: userconfig, dest: "{{ link }}/userconfig" }
-    - { name: poseidon-profiles, dest: "{{ link }}/profiles", branch: main }
+    # The profiles repo gets modified every time the server runs -> can't be
+    # pulled automatically because of local changes
+    - { name: poseidon-profiles, dest: "{{ link }}/profiles", branch: main, pull_updates: no }
     ufw_apps:
     - { file: arma-server, app: Arma }
     symlinks:
     - { src: "{{ link }}", dest: "{{ home }}/link" }
     - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
-    - { src: "{{ link }}/profiles", dest: "{{ home }}/.local/share/Arma 3 - Other Profiles" }
 
 
   tasks:
@@ -134,6 +135,7 @@
       # Submodules are cloned manually because we want to set the SSH remote
       # address instead of HTTPS
       recursive: no
+      update: "{{ item.pull_updates | d('yes') }}"
     loop: "{{ repos }}"
   - name: Install workshop-notifier dependencies
     ansible.builtin.pip:
