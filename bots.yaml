@@ -75,6 +75,7 @@
     ansible.builtin.template:
       src: "files/bots/config/{{ item.name }}.{{ item.file }}"
       dest: "/srv/{{ item.name }}/{{ item.name }}/{{ item.file }}"
+      mode: '0600'
     loop: "{{ bots }}"
     register: bot_services
     notify: Restart bot services
