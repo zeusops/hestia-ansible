@@ -17,3 +17,5 @@
       after:
       - network.target
       timeout_start_sec: 1m
+    # Don't run `apt upgrade` every time something changes
+    podman_upgrade_system: no
