@@ -1,0 +1,9 @@
+---
+- name: Manage containers
+  hosts: containerhost
+
+  roles:
+  - chasinglogic.podman
+
+
+  # TODO: run wakapi automatically
