@@ -31,6 +31,7 @@
     symlinks:
     - { src: "{{ link }}", dest: "{{ home }}/link" }
     - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
+    - { src: "{{ server }}/base-installation", dest: "{{ home }}/arma3" }
 
 
   tasks:
@@ -185,3 +186,39 @@
       path: "{{ home }}"
       state: directory
       mode: "o+x"
+
+  - name: Create arma systemd service
+    become: yes
+    become_user: root
+    ansible.builtin.template:
+      src: files/arma/systemd.service.j2
+      dest: /etc/systemd/system/arma@.service
+    vars:
+      bin: "{{ repodir }}/bin"
+      group: "{{ user }}"
+      workdir: "{{ server }}/base-installation"
+    notify:
+    - Reload systemd
+  - name: Enable arma service
+    become: yes
+    become_user: root
+    ansible.builtin.service:
+      #state: started
+      enabled: yes
+      name: arma@main.service
+  - name: Create cronjob to start HCs
+    become: yes
+    become_user: root
+    ansible.builtin.cron:
+      name: Start HCs after boot
+      cron_file: start-hcs
+      special_time: reboot
+      user: root
+      job: sleep 120 ; for x in 1 2 3; do systemctl start arma@main-hc$x; sleep 5; done
+
+  handlers:
+  - name: Reload systemd
+    become: yes
+    become_user: root
+    ansible.builtin.systemd:
+      daemon_reload: yes

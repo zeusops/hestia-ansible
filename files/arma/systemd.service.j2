@@ -1,0 +1,15 @@
+[Unit]
+Description=Arma server: %i
+Wants=network.target
+After=network.target
+
+[Service]
+Environment=PATH={{ bin }}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+ExecStart={{ bin }}/internal/service-wrapper.py %i
+User={{ user }}
+Group={{ group }}
+WorkingDirectory={{ workdir }}
+SyslogIdentifier=arma %i
+
+[Install]
+WantedBy=multi-user.target
