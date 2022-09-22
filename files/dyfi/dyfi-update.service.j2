@@ -1,0 +1,11 @@
+[Unit]
+Description=dy.fi updater
+Wants=network-online.target
+After=network-online.target
+AssertPathExists={{ config | d('/etc') }}/dyfi-update-%i.conf
+
+[Service]
+ExecStart={{ exe | d('/usr/local/sbin' ) }}/dyfi-update.pl -f {{ config | d('/etc') }}/dyfi-update-%i.conf
+
+[Install]
+WantedBy=multi-user.target

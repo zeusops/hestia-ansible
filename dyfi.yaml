@@ -1,0 +1,107 @@
+---
+- name: Set up websites using dy.fi
+  hosts: web
+
+  vars:
+    dyfi:
+      version: "1.2.0"
+      hash: sha256:297aaf3f0056bc7d850a4ff2c9195177647bbad8ff10d03130315fb85111b1db
+    dyfi_configs:
+    - name: main
+      user: dy.fi.domain@gmail.com
+      password: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        38643632313830373433346335303064346234343932626333643639653738613632373732616238
+        3231643631663237623833663439396264343766623466370a636530313736353030336139313635
+        66396336653334323965346130636534363331386338393465343963373366366530653238373039
+        3337373830396438340a643832333430323836393862383061373937383132643939393134306661
+        34333266303362393431363037336266623336616238326534376437616138386264
+      hosts:
+      - gehock.dy.fi
+      - "*.gehock.dy.fi"
+
+  tasks:
+  # === certbot ===
+  - name: Install certbot dependencies
+    ansible.builtin.apt:
+      name:
+      - python3
+      - python3-venv
+      - libaugeas0
+      update_cache: true
+  - name: Remove certbot-auto
+    ansible.builtin.apt:
+      name: certbot-auto
+      state: absent
+  - name: Create certbot venv
+    ansible.builtin.pip:
+      name:
+      - certbot
+      - certbot-nginx
+      virtualenv: "/opt/certbot"
+  # TODO: get certs automatically?
+
+  # An equivalent job is being installed by the revproxy role
+  #- name: Add certbot cronjob
+  #  ansible.builtin.cron:
+  #    name: Renew LE certificates
+  #    cron_file: run-certbot
+  #    minute: 0
+  #    hour: 0,12
+  #    user: root
+  #    job: /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && /opt/certbot/bin/certbot renew -q
+
+  # === dyfi-update ===
+  - name: Check if dyfi-update exists
+    ansible.builtin.stat:
+      path: /usr/local/sbin/dyfi-update.pl
+    register: download
+  - ansible.builtin.tempfile:
+      state: file
+      suffix: .tar.gz
+    register: downloaded_file
+    when: not download.stat.exists
+  - name: Download dyfi-update
+    ansible.builtin.get_url:
+      url: "https://www.dy.fi/files/dyfi-update-pl-{{ dyfi.version }}.tar.gz"
+      dest: "{{ downloaded_file.path }}"
+      checksum: "{{ dyfi.hash }}"
+    when: downloaded_file is changed
+  - name: Extract dyfi-update
+    ansible.builtin.unarchive:
+      src: "{{ downloaded_file.path }}"
+      remote_src: yes
+      dest: /usr/local/sbin
+      include: "dyfi-update-pl-{{ dyfi.version }}/dyfi-update.pl"
+      extra_opts:
+      - --strip-components=1
+    when: downloaded_file is changed
+  - ansible.builtin.file:
+      state: absent
+      path: "{{ downloaded_file.path }}"
+    when: downloaded_file is changed
+  # systemd
+  - name: Create systemd service
+    ansible.builtin.template:
+      src: files/dyfi/dyfi-update.service.j2
+      dest: "/etc/systemd/system/dyfi-update@.service"
+    notify:
+    - Reload systemd
+  - name: Create configs
+    ansible.builtin.template:
+      src: files/dyfi/dyfi-update.conf.j2
+      dest: "/etc/dyfi-update-{{ item.name }}.conf"
+    loop: "{{ dyfi_configs }}"
+  - name: Start services
+    ansible.builtin.systemd:
+      state: started
+      enabled: yes
+      name: "dyfi-update@{{ item.name }}"
+    loop: "{{ dyfi_configs }}"
+
+
+
+  handlers:
+  - name: Reload systemd
+    ansible.builtin.systemd:
+      daemon_reload: yes
