@@ -6,6 +6,7 @@
     ssh_users:
     - sami
     - root
+    - arma
     git_config_users:
     - sami
     - root
