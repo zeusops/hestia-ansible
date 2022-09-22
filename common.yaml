@@ -3,9 +3,15 @@
   hosts: all
 
   vars:
-    users:
-      - sami
-      - root
+    ssh_users:
+    - sami
+    - root
+    git_config_users:
+    - sami
+    - root
+    git_configs:
+    - { config: user.name,  value: Sami Laine }
+    - { config: user.email, value: sami.v.laine@gmail.com }
 
   tasks:
   - name: Install packages
@@ -40,19 +46,12 @@
       name: "{{ item.1.config }}"
       value: "{{ item.1.value }}"
     loop: "{{ git_config_users|product(git_configs)|list }}"
-    vars:
-      git_configs:
-      - { config: user.name,  value: Sami Laine }
-      - { config: user.email, value: sami.v.laine@gmail.com }
-      git_config_users:
-      - sami
-      - root
   - name: Add SSH keys
     ansible.posix.authorized_key:
       user: "{{ item }}"
       key: "{{ lookup('file', 'files/pubkeys/{{ item }}') }}"
       exclusive: True
-    loop: "{{ users }}"
+    loop: "{{ ssh_users }}"
   - name: Set vim as editor
     community.general.alternatives:
       name: editor
