@@ -1,0 +1,27 @@
+server {
+  listen 80;
+  listen [::]:80;
+
+  server_name {{ server_name }};
+
+  access_log /var/log/nginx/{{ server_name }}_access.log;
+  error_log /var/log/nginx/{{ server_name }}_error.log;
+
+  location / {
+    return 302 https://www.{{ server_name }}$request_uri;
+  }
+}
+
+server {
+  listen 443 ssl;
+  listen [::]:443 ssl;
+
+  server_name {{ server_name }};
+
+  access_log /var/log/nginx/{{ server_name }}_access.log;
+  error_log /var/log/nginx/{{ server_name }}_error.log;
+
+  location / {
+    return 302 https://www.{{ server_name }}$request_uri;
+  }
+}
