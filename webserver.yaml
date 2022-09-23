@@ -9,6 +9,8 @@
     homedir: /srv
     webhook: { user: webhook, name: git.zeusops.com, dest: "{{ homedir }}/webhook/webhook", gh_user: Gehock }
     www_dir: /var/www
+    cockpit_origins:
+    - https://cockpit.zeusops.com
 
     nginx_revproxy_sites:
       #default:
@@ -21,6 +23,15 @@
           - git.hestia.zeusops.com
         upstreams:
           - { backend_address: 127.0.0.1, backend_port: 9000 }
+        ssl: true
+        letsencrypt: true
+        letsencrypt_email: webmaster@zeusops.com
+      cockpit.zeusops.com:
+        domains:
+          - cockpit.zeusops.com
+        upstreams:
+          #- { backend_address: /run/cockpit/wsinstance/http.sock, backend_port: 8080 }
+          - { backend_address: 127.0.0.1, backend_port: 9090 }
         ssl: true
         letsencrypt: true
         letsencrypt_email: webmaster@zeusops.com
@@ -238,6 +249,14 @@
     notify:
     - Reload nginx
 
+  # === cockpit ===
+  - name: Create cockpit config
+    ansible.builtin.template:
+      src: files/cockpit/cockpit.conf.j2
+      dest: /etc/cockpit/cockpit.conf
+
+
+  # ====== handlers ======
   handlers:
   - name: Reload systemd
     ansible.builtin.systemd:

@@ -29,6 +29,9 @@
         - aptitude
         - apt-file
         - python3-venv
+        - cockpit
+        - cockpit-pcp
+        - sscg
       update_cache: true
   - name: Set git default branch
     community.general.git_config:

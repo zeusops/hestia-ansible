@@ -1,0 +1,4 @@
+{% if cockpit_origins is defined %}
+[WebService]
+Origins = {{ cockpit_origins | join(' ') }}
+{% endif %}
