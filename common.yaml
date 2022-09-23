@@ -78,6 +78,9 @@
     # https://github.com/fwupd/fwupd/commit/0c9ac226c976836b89e8a3736145f162f43f4691
     # https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1969976
     ansible.builtin.systemd:
-      name: fwupd-refresh
+      name: "{{ item }}"
       state: stopped
       masked: yes
+    loop:
+    - fwupd-refresh.service
+    - fwupd-refresh.timer
