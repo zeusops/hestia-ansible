@@ -30,7 +30,10 @@
         - apt-file
         - python3-venv
         - cockpit
+        - cockpit-podman
+        # store past metrics
         - cockpit-pcp
+        # certificate generator for cockpit
         - sscg
       update_cache: true
   - name: Set git default branch
