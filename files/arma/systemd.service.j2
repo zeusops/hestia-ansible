@@ -1,7 +1,11 @@
 [Unit]
 Description=Arma server: %i
-Wants=network.target
-After=network.target
+{# Systemd recommends using network.target for servers that only listen for
+incoming connections. Using network-online.target here instead because
+checking for mod updates requires a network connection. For more info:
+https://systemd.io/NETWORK_ONLINE/ #}
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Environment=PATH={{ bin }}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
