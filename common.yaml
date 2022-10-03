@@ -29,6 +29,7 @@
         - aptitude
         - apt-file
         - python3-venv
+        - molly-guard
         - cockpit
         - cockpit-podman
         # store past metrics
