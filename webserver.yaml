@@ -13,6 +13,8 @@
     - https://cockpit.zeusops.com
     www_redirects:
     - zeusops.com
+    sites:
+    - gehock.dy.fi
 
     nginx_revproxy_sites:
       #default:
@@ -231,11 +233,14 @@
 
   - name: Enable site
     ansible.builtin.file:
-      src: /etc/nginx/sites-available/gehock.dy.fi.conf
-      dest: /etc/nginx/sites-enabled/gehock.dy.fi.conf
+      src: /etc/nginx/sites-available/{{ server_name }}.conf
+      dest: /etc/nginx/sites-enabled/{{ server_name }}.conf
       force: yes
       follow: no
       state: link
+    loop: "{{ sites }}"
+    loop_control:
+      loop_var: server_name
 
   # NOTE: setup TLS cert
   - name: Copy config
@@ -243,11 +248,13 @@
       src: files/nginx/site.conf.j2
       dest: /etc/nginx/sites-available/{{ server_name }}.conf
     vars:
-      server_name: gehock.dy.fi
       access_log: /var/log/nginx/{{ server_name }}.log
       error_log: /var/log/nginx/{{ server_name }}.err
       root: "{{ www_dir }}/{{ server_name }}/httpdocs"
       le: yes
+    loop: "{{ sites }}"
+    loop_control:
+      loop_var: server_name
     notify:
     - Reload nginx
 
