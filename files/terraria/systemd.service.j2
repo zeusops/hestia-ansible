@@ -1,0 +1,13 @@
+[Unit]
+Description=Server daemon for terraria
+Wants=network.target
+
+[Service]
+Type=forking
+User={{ service_name }}
+KillMode=none
+ExecStart=/usr/bin/screen -dmS terraria /bin/bash -c "{{ server_dir }}/TerrariaServer.bin.x86_64 -config {{ home }}/serverconfig.txt"
+ExecStop=/usr/local/bin/terrariad exit
+
+[Install]
+WantedBy=multi-user.target

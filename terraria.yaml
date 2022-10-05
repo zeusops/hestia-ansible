@@ -1,0 +1,118 @@
+---
+- name: Set up terraria server
+  hosts: terraria
+  vars:
+    service_name: terraria
+    home: "/srv/{{ service_name }}"
+    server_dir: "{{ home }}/server"
+    version: 1444
+    hash: b11355c025f33f015591a8e7824595b6c94d6e339f3a30c6bb6585728f23fe5b
+    worldpath: "{{ home }}/worlds"
+    worldname: "myworld"
+    password: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      35353532326132306335386663633366303538333633653264373638306466366162663038636139
+      3238346562653230613162313937623165366534353062380a623930346464373561393230353431
+      38646239326335343836353133333738396139343836383965626333616632396662653361613231
+      3361313363326464640a646161303530613462653661393734636333393330323831623835663638
+      3561
+    ufw_apps:
+    - { file: terraria, app: Terraria }
+
+  tasks:
+  - name: Create user
+    ansible.builtin.user:
+      name: "{{ service_name }}"
+      system: yes
+      home: "{{ home }}"
+  - name: Check if server exists
+    ansible.builtin.stat:
+      path: "{{ server_dir }}/TerrariaServer.bin.x86_64"
+    register: target
+  - ansible.builtin.tempfile:
+      state: file
+      suffix: .zip
+    register: downloaded_file
+    when: not target.stat.exists
+  - ansible.builtin.tempfile:
+      state: directory
+    register: extract_dir
+    when: not target.stat.exists
+  - name: Create target directory
+    ansible.builtin.file:
+      path: "{{ server_dir }}"
+      state: directory
+  - name: Download server
+    ansible.builtin.get_url:
+      url: "https://terraria.org/api/download/pc-dedicated-server/terraria-server-{{ version }}.zip"
+      dest: "{{ downloaded_file.path }}"
+      checksum: "sha256:{{ hash }}"
+    when: downloaded_file is changed
+  - name: Extract server
+    ansible.builtin.unarchive:
+      src: "{{ downloaded_file.path }}"
+      remote_src: yes
+      dest: "{{ extract_dir.path }}"
+      include:
+      - "{{ version }}/Linux/*"
+    when: downloaded_file is changed
+  - name: Copy server
+    ansible.builtin.copy:
+      src: "{{ extract_dir.path}}/{{ version }}/Linux/"
+      dest: "{{ server_dir }}"
+      remote_src: yes
+      owner: "{{ service_name }}"
+      group: "{{ service_name }}"
+    when: downloaded_file is changed
+  - ansible.builtin.file:
+      state: absent
+      path: "{{ downloaded_file.path }}"
+    when: downloaded_file is changed
+  - ansible.builtin.file:
+      state: absent
+      path: "{{ extract_dir.path }}"
+    when: downloaded_file is changed
+  - name: Make server executable
+    ansible.builtin.file:
+      path: "{{ server_dir }}/TerrariaServer.bin.x86_64"
+      mode: u+x
+  - name: Create config file
+    ansible.builtin.template:
+      src: files/terraria/serverconfig.txt.j2
+      dest: "{{ home }}/serverconfig.txt"
+      mode: 0600
+      owner: "{{ service_name }}"
+      group: "{{ service_name }}"
+  - name: Create systemd service
+    ansible.builtin.template:
+      src: files/terraria/systemd.service.j2
+      dest: /etc/systemd/system/{{ service_name }}.service
+    notify:
+    - Reload systemd
+  - name: Run terraria
+    ansible.builtin.systemd:
+      state: started
+      enabled: yes
+      name: "{{ service_name }}"
+  - name: Install terrariad
+    ansible.builtin.template:
+      src: files/terraria/terrariad.j2
+      dest: /usr/local/bin/terrariad
+      mode: 0755
+  # UFW
+  # TODO: move into a role
+  - name: Install UFW apps
+    ansible.builtin.copy:
+      src: "files/ufw/applications.d/{{ item.file }}"
+      dest: "/etc/ufw/applications.d/{{ item.file }}"
+    loop: "{{ ufw_apps }}"
+  - name: Enable UFW rules
+    community.general.ufw:
+      rule: allow
+      name: "{{ item.app }}"
+    loop: "{{ ufw_apps }}"
+
+  handlers:
+  - name: Reload systemd
+    ansible.builtin.systemd:
+      daemon_reload: yes
