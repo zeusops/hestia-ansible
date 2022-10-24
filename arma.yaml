@@ -103,7 +103,7 @@
     community.crypto.openssh_keypair:
       type: ed25519
       path: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
-      comment: "{{ user }}@{{ ansible_hostname }} ({{ item.name }})"
+      comment: "{{ user }}@{{ ansible_hostname }}#{{ item.name }}"
     loop: "{{ repos }}"
     register: sshkey
   - name: Print keys
