@@ -26,6 +26,7 @@
     # The profiles repo gets modified every time the server runs -> can't be
     # pulled automatically because of local changes
     - { name: poseidon-profiles, dest: "{{ link }}/profiles", branch: main, pull_updates: no }
+    - { name: mod-preset-convert, dest: "{{ home }}/preset-convert", branch: main }
     ufw_apps:
     - { file: arma-server, app: Arma }
     symlinks:
@@ -142,6 +143,10 @@
     ansible.builtin.pip:
       requirements: "{{ repodir }}/bin/internal/workshop-checker/requirements.txt"
       virtualenv: "{{ repodir }}/bin/internal/workshop-checker/venv"
+  - name: Install preset-convert dependencies
+    ansible.builtin.pip:
+      requirements: "{{ home }}/preset-convert/requirements.txt"
+      virtualenv: "{{ home }}/preset-convert/venv"
   - name: Symlink server-handling
     ansible.builtin.file:
       src: "{{ repodir }}"
