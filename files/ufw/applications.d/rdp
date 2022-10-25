@@ -1,4 +1,4 @@
 [rdp]
 title=RDP
 description=RDP
-ports=3389/tcp
+ports=3389/tcp|3389/udp

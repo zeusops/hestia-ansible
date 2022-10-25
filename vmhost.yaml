@@ -1,0 +1,39 @@
+---
+- name: Set up VM host
+  hosts: vmhost
+
+  vars:
+    domain: zeusops.com
+    vms:
+    - name: poseidon
+      ip: 192.168.122.3
+    - name: talos
+      ip: 192.168.122.4
+    ufw_apps:
+    - { file: rdp, app: RDP }
+    vm_interface: virbr0
+
+  tasks:
+  - name: Install packages
+    ansible.builtin.apt:
+      name:
+      - bridge-utils
+      - cpu-checker
+      - libvirt-clients
+      - libvirt-daemon
+      - qemu
+      - qemu-kvm
+      - qemu-utils
+      - ovmf
+      update_cache: true
+      install_recommends: no
+  - name: Set up /etc/hosts
+    ansible.builtin.lineinfile:
+      path: /etc/hosts
+      line: "{{ item.ip }} {{ item.name }} {{ item.name }}.{{ domain }}"
+      search_string: "{{ item.name }}"
+    loop: "{{ vms }}"
+  # TODO:
+  # - set up networks (static IP addresses for DHCP) via ansible
+  # - define VMs?
+  # - pull data from backup?
