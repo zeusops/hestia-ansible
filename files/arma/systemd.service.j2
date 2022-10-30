@@ -6,6 +6,8 @@ checking for mod updates requires a network connection. For more info:
 https://systemd.io/NETWORK_ONLINE/ #}
 Wants=network-online.target
 After=network-online.target
+StartLimitIntervalSec=30
+StartLimitBurst=3
 
 [Service]
 Environment=PATH={{ bin }}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
@@ -15,6 +17,7 @@ Group={{ group }}
 WorkingDirectory={{ workdir }}
 SyslogIdentifier=arma %i
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
