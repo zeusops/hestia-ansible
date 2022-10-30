@@ -3,6 +3,7 @@
   hosts: web
 
   roles:
+  # This role also installs certbot
   - hispanico.nginx_revproxy
 
   vars:
@@ -11,6 +12,7 @@
     www_dir: /var/www
     cockpit_origins:
     - https://cockpit.zeusops.com
+    # Sites that should be redirected from example.com to www.example.com
     www_redirects:
     - zeusops.com
     sites:
@@ -81,6 +83,15 @@
     - [hqresponses, "https://docs.google.com/spreadsheets/d/1BtosRxvotFQJfGNPnw_WuZENEpXtKBhx1v8DXLys25o/edit?usp=sharing"]
     - [github, "https://github.com/zeusops"]
     - [coinfo, "https://docs.google.com/document/d/1mYguW7eceldh_mXQreNOOEHtThQ3GCRow4VyzqvrU6c/edit"]
+    hetzner_dns_token: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      64646431616139336435373932326636353537613739363137393139383164663961633465633630
+      6566366561323164626636653739313131613636346335620a393736653631643737393331623263
+      35323336313834643632383065656439663531306136303939656663366262653363623561613637
+      6236653933373034640a336434633436343363393634623966333963376537636165393163363333
+      64616162363362323133613364363738626136393734383461356138393930663364373838633763
+      6565346233303634663866626564316262323061363839366263
+    wildcard_site_domain: zeusops.com
 
 
   tasks:
@@ -194,6 +205,9 @@
     ansible.builtin.template:
       src: files/nginx/nginx.conf.j2
       dest: /etc/nginx/nginx.conf
+    vars:
+      ssl_certificate: /etc/letsencrypt/live/{{ wildcard_site_domain }}/fullchain.pem
+      ssl_certificate_key: /etc/letsencrypt/live/{{ wildcard_site_domain }}/privkey.pem
     notify:
     - Reload nginx
 
@@ -304,6 +318,32 @@
       src: files/cockpit/cockpit.conf.j2
       dest: /etc/cockpit/cockpit.conf
 
+  # === *.zeusops.com certificate ===
+
+  - name: Install certbot-hetzner scripts
+    ansible.builtin.get_url:
+      url: https://raw.githubusercontent.com/dschoeffm/hetzner-dns-certbot/856049ca8a2e34333a55b5d3d69335eae4f08936/{{ item }}
+      dest: /usr/libexec/{{ item }}
+      mode: '0755'
+    loop:
+    - certbot-hetzner-auth.sh
+    - certbot-hetzner-cleanup.sh
+
+  - name: Create hetzner DNS token file
+    ansible.builtin.copy:
+      dest: /etc/hetzner-dns-token
+      content: "{{ hetzner_dns_token }}"
+      mode: '0600'
+
+  - name: Get wildcard certificate using certbot
+    ansible.builtin.command: |
+      certbot certonly
+      --manual
+      --preferred-challenges=dns
+      --manual-auth-hook /usr/libexec/certbot-hetzner-auth.sh
+      --manual-cleanup-hook /usr/libexec/certbot-hetzner-cleanup.sh
+      -d {{ wildcard_site_domain }} -d *.{{ wildcard_site_domain }}
+      creates=/etc/letsencrypt/live/{{ wildcard_site_domain }}/fullchain.pem
 
   # ====== handlers ======
   handlers:
