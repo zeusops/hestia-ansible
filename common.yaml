@@ -15,6 +15,17 @@
     - { config: user.email, value: sami.v.laine@gmail.com }
 
   tasks:
+  - name: Add cockpit-navigator repo
+    block:
+      - name: Add 45drives key
+        ansible.builtin.get_url:
+          url: https://repo.45drives.com/key/gpg.asc
+          dest: /etc/apt/trusted.gpg.d/45drives-archive-keyring.asc
+
+      - name: Add 45drives repo
+        ansible.builtin.apt_repository:
+          repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/45drives-archive-keyring.asc] https://repo.45drives.com/debian focal main"
+          state: present
   - name: Install packages
     ansible.builtin.apt:
       name:
@@ -34,6 +45,8 @@
         - cockpit-podman
         # store past metrics
         - cockpit-pcp
+        - cockpit-machines
+        - cockpit-navigator
         # certificate generator for cockpit
         - sscg
         - unzip
