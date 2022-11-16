@@ -1,0 +1,100 @@
+---
+- name: Set up minecraft server
+  become_user: "{{ service_name }}"
+  hosts: minecraft
+  vars:
+    service_name: minecraft
+    home: "/srv/{{ service_name }}"
+    server_name: 2022-11-03-gehock-test
+    server_dir: "{{ home }}/{{ server_name }}"
+    mc_version: 1.18.2
+    forge_version: 40.1.68
+    hash: 01192708acf889c7ed78f0cfc27446c947e4c5b2
+    ufw_apps:
+    - { file: minecraft-server, app: Minecraft }
+
+  tasks:
+  - name: Create user
+    ansible.builtin.user:
+      name: "{{ service_name }}"
+      system: yes
+      shell: /usr/bin/bash
+      home: "{{ home }}"
+  - name: Install packages
+    ansible.builtin.apt:
+      name:
+        - openjdk-18-jre-headless
+  - name: Add tmux script
+    ansible.builtin.copy:
+      src: files/minecraft/tmux_start.sh
+      dest: "{{ home }}/tmux_start.sh"
+  - name: Create reboot tmux task
+    ansible.builtin.cron:
+      name: Start tmux on boot
+      #cron_file: backup-operationbot
+      special_time: reboot
+      user: "{{ service_name }}"
+      job: SHELL=/bin/bash $HOME/tmux_start.sh
+  - name: Create server directory
+    ansible.builtin.file:
+      path: "{{ server_dir }}"
+      state: directory
+    become: yes
+  - name: Check if start script exists
+    ansible.builtin.stat:
+      path: "{{ server_dir }}/run.sh"
+    register: target
+  - ansible.builtin.tempfile:
+      path: "{{ server_dir }}"
+      state: file
+      suffix: .jar
+    register: downloaded_file
+    become: yes
+    when: not target.stat.exists
+  - name: Download server
+    ansible.builtin.get_url:
+      url: "https://maven.minecraftforge.net/net/minecraftforge/forge/{{ mc_version }}-{{ forge_version }}/forge-{{ mc_version }}-{{ forge_version }}-installer.jar"
+      dest: "{{ downloaded_file.path }}"
+      checksum: "sha1:{{ hash }}"
+    become: yes
+    when: downloaded_file is changed
+  - name: Install server
+    ansible.builtin.command:
+      cmd: java -jar "{{ downloaded_file.path }}" --installServer
+      creates: "{{ server_dir }}/run.sh"
+      chdir: "{{ server_dir }}"
+    become: yes
+    when: downloaded_file is changed
+  - name: Delete installer
+    ansible.builtin.file:
+      state: absent
+      path: "{{ downloaded_file.path }}"
+    become: yes
+    when: downloaded_file is changed
+  - name: Accept eula
+    ansible.builtin.copy:
+      content: eula=true
+      dest: "{{ server_dir }}/eula.txt"
+    become: yes
+  - name: Copy wrapper
+    ansible.builtin.copy:
+      src: files/minecraft/wrap.sh
+      dest: "{{ server_dir }}/wrap.sh"
+    become: yes
+  # UFW
+  # TODO: move into a role
+  - name: Install UFW apps
+    ansible.builtin.copy:
+      src: "files/ufw/applications.d/{{ item.file }}"
+      dest: "/etc/ufw/applications.d/{{ item.file }}"
+    loop: "{{ ufw_apps }}"
+  - name: Enable UFW rules
+    community.general.ufw:
+      rule: allow
+      name: "{{ item.app }}"
+    loop: "{{ ufw_apps }}"
+
+  handlers:
+  - name: Reload systemd
+    ansible.builtin.systemd:
+      daemon_reload: yes
