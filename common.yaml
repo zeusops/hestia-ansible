@@ -50,6 +50,8 @@
         # certificate generator for cockpit
         - sscg
         - unzip
+        # Includes the checkrestart command
+        - debian-goodies
       update_cache: true
   - name: Set git default branch
     community.general.git_config:
