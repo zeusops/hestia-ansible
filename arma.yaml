@@ -18,6 +18,31 @@
           65396537366465636232366563656166356132633838366465666132656338323834626162313436
           3365326635353837320a356261633236623732366632336232646135616265303364633730376130
           3066
+    workshop_checker:
+      mail: 'updatebot@zeusops.com'
+      password: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        38373165613865303133623438353339353262653635623432353465343166643235313462303536
+        3066353631626235636565653933306261643231393064330a356463303438356162633739383966
+        65313961353066333137616461346639336531323463353064306661626137393161343665393535
+        3837336639666463320a666239306165626363643462623066643236636635623539623066356234
+        30663036663966613137366339636331373739656638633661383462623263653064
+      recipients:
+      - gehock@zeusops.com
+      - berger@zeusops.com
+      webhook_secret: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        37323666613639626433396633616566323839646563396632333638363430656361356231393931
+        3834666133336532306536646533356433646437373038340a303663306331323735393263326634
+        62383161646166353464323631663539306234643739353565303435306161373739343430306537
+        3566373665313532620a646332306566366338353764613764346230613938366337613461373663
+        33623739653864636532646533376636393234393061613430333535373265356637623034616233
+        64653764363936336662303364363637616430646663663562333839643331623364373662313730
+        65316638333962303962396338303937313161326531333065353932353636656462346665336236
+        31396431636138656139363832626239363664643138343665363166666137333331356537326363
+        3066
+
+    webhook_url: 'https://discord.com/api/webhooks/{{ workshop_checker.webhook_secret }}'
     repos:
     - { name: server-handling, dest: "{{ repodir }}" }
     - { name: modlists, dest: "{{ repodir }}/modlists" }
@@ -139,7 +164,7 @@
       recursive: no
       update: "{{ item.pull_updates | d('yes') }}"
     loop: "{{ repos }}"
-  - name: Install workshop-notifier dependencies
+  - name: Install workshop-checker dependencies
     ansible.builtin.pip:
       requirements: "{{ repodir }}/bin/internal/workshop-checker/requirements.txt"
       virtualenv: "{{ repodir }}/bin/internal/workshop-checker/venv"
@@ -147,6 +172,27 @@
     ansible.builtin.pip:
       requirements: "{{ home }}/preset-convert/requirements.txt"
       virtualenv: "{{ home }}/preset-convert/venv"
+
+  - name: Create workshop-checker config
+    ansible.builtin.template:
+      src: files/arma/workshop-checker/secret.py.j2
+      dest: "{{ repodir }}/bin/internal/workshop-checker/secret.py"
+    vars:
+      mail: "{{ workshop_checker.mail }}"
+      password: "{{ workshop_checker.password }}"
+      recipients: "{{ workshop_checker.recipients }}"
+      #webhook_url: "{{ webhook_url }}"
+
+  - name: Create cronjob to check mod updates
+    become: yes
+    become_user: root
+    ansible.builtin.cron:
+      name: Check for mod updates
+      cron_file: check-mod-upates
+      minute: "*/15"
+      user: "{{ user }}"
+      job: "{{ repodir }}/bin/update-mods.sh main --check-only --notify --no-mail > /dev/null"
+
   - name: Symlink server-handling
     ansible.builtin.file:
       src: "{{ repodir }}"
