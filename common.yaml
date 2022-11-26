@@ -115,3 +115,9 @@
     loop:
     - fwupd-refresh.service
     - fwupd-refresh.timer
+  - name: Suppress Cockpit warning
+    # Cockpit outputs error messages if this directory is missing. See
+    # https://www.digitalocean.com/community/tutorials/how-to-install-cockpit-on-debian-10#step-1-installing-cockpit
+    ansible.builtin.file:
+      path: /usr/lib/x86_64-linux-gnu/udisks2/modules
+      state: directory
