@@ -56,6 +56,8 @@
         # Includes the checkrestart command
         - debian-goodies
         - mosh
+        - mailutils
+        - postfix
       update_cache: true
   - name: Set git default branch
     community.general.git_config:
@@ -121,3 +123,41 @@
     ansible.builtin.file:
       path: /usr/lib/x86_64-linux-gnu/udisks2/modules
       state: directory
+  - name: Postfix local transport
+    block:
+    - name: Bind postfix to local only
+      ansible.builtin.lineinfile:
+        dest: /etc/postfix/main.cf
+        line: "inet_interfaces = loopback-only"
+        regexp: '^inet_interfaces'
+        state: present
+        mode: "0644"
+      notify:
+      - Reload postfix
+    - name: Add virtual map to postfix
+      ansible.builtin.lineinfile:
+        dest: /etc/postfix/main.cf
+        line: "virtual_alias_maps = hash:/etc/postfix/virtual"
+        state: present
+        mode: "0644"
+      notify:
+      - Reload postfix
+    - name: Add catch-all alias for root
+      ansible.builtin.lineinfile:
+        dest: /etc/postfix/virtual
+        line: "@hestia.zeusops.com root"
+        state: present
+        mode: "0644"
+        create: yes
+      notify:
+      - Rebuild virtual.db
+
+
+  # ====== handlers ======
+  handlers:
+  - name: Reload postfix
+    ansible.builtin.service:
+      name: postfix
+      state: reloaded
+  - name: Rebuild virtual.db
+    shell: postmap /etc/postfix/virtual
