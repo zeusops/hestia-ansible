@@ -8,6 +8,8 @@
     - root
     - arma
     - minecraft
+    sudoers:
+    - sami
     git_config_users:
     - sami
     - root
