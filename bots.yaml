@@ -169,6 +169,24 @@
       user: operationbot
       job: /srv/operationbot/operationbot/scripts/backup-events.sh > /dev/null
 
+  - name: Install gh for zeusopsbot
+    block:
+    - name: Add githubcli key
+      ansible.builtin.get_url:
+        url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        dest: /etc/apt/trusted.gpg.d/githubcli-archive-keyring.gpg
+
+    - name: Add githubcli repo
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+        state: present
+
+    - name: Install gh
+      ansible.builtin.apt:
+        name:
+        - gh
+        update_cache: true
+
 
   handlers:
   - name: Reload systemd
