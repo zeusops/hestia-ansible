@@ -219,7 +219,7 @@
       dest: "{{ www_dir }}/www.zeusops.com"
       accept_newhostkey: yes
 
-  - name: Enable site
+  - name: Enable zeusops.com
     ansible.builtin.file:
       src: /etc/nginx/sites-available/www.zeusops.com.conf
       dest: /etc/nginx/sites-enabled/www.zeusops.com.conf
@@ -227,8 +227,7 @@
       follow: no
       state: link
 
-  # TODO: setup TLS cert
-  - name: Copy config
+  - name: Copy zeusops.com config
     ansible.builtin.template:
       src: files/nginx/site.conf.j2
       dest: /etc/nginx/sites-available/{{ server_name }}.conf
@@ -244,6 +243,17 @@
   # === gehock.dy.fi ===
 
   # NOTE: site data is currently copied manually to /var/www/gehock.dy.fi
+
+  - name: Get site certificates using certbot
+    ansible.builtin.command: |
+      certbot
+      --nginx
+      -n
+      --agree-tos
+      certonly
+      -d {{ item }}
+      creates=/etc/letsencrypt/live/{{ item }}/fullchain.pem
+    loop: "{{ sites }}"
 
   - name: Enable site
     ansible.builtin.file:
