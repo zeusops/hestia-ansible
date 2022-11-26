@@ -55,6 +55,7 @@
         - unzip
         # Includes the checkrestart command
         - debian-goodies
+        - mosh
       update_cache: true
   - name: Set git default branch
     community.general.git_config:
@@ -91,6 +92,10 @@
     community.general.ufw:
       rule: allow
       name: OpenSSH
+  - name: Allow mosh
+    community.general.ufw:
+      rule: allow
+      name: mosh
   - name: Start fail2ban
     ansible.builtin.systemd:
       state: started
