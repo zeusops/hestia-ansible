@@ -103,17 +103,17 @@
       state: started
       enabled: yes
       name: fail2ban
-  - name: Mask fwupd service
-    # A bug in systemd causes the service to always fail. A fix has been
-    # created, expected to release any day now. See the following links for
-    # further info:
+  - name: Enable fwupd service
+    # A previous bug in systemd caused fwupd to always fail. The services were
+    # previously masked, making sure it's enabled now. See the following links
+    # for further info:
     # https://github.com/fwupd/fwupd/issues/3037
     # https://github.com/fwupd/fwupd/commit/0c9ac226c976836b89e8a3736145f162f43f4691
     # https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1969976
     ansible.builtin.systemd:
       name: "{{ item }}"
-      state: stopped
-      masked: yes
+      state: started
+      masked: no
     loop:
     - fwupd-refresh.service
     - fwupd-refresh.timer
