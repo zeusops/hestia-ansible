@@ -177,6 +177,7 @@
     ansible.builtin.template:
       src: files/arma/workshop-checker/secret.py.j2
       dest: "{{ repodir }}/bin/internal/workshop-checker/secret.py"
+      mode: '0600'
     vars:
       mail: "{{ workshop_checker.mail }}"
       password: "{{ workshop_checker.password }}"
