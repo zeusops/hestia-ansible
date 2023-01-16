@@ -10,7 +10,7 @@ StartLimitIntervalSec=30
 StartLimitBurst=3
 
 [Service]
-Environment=PATH={{ bin }}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+Environment=PATH={{ bin }}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin STEAM_DIR={{ steam_dir }}
 ExecStart={{ bin }}/internal/service-wrapper.py %i
 User={{ user }}
 Group={{ group }}

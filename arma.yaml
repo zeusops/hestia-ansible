@@ -1,8 +1,6 @@
 ---
 - name: Install steamcmd and Arma
   hosts: arma
-  become: yes
-  become_user: "{{ user }}"
 
   vars:
     user: arma
@@ -10,14 +8,8 @@
     server: "{{ home }}/server"
     repodir: "{{ server }}/server-handling"
     link: "{{ server }}/link"
+    armadir: "{{ server }}/base-installation"
     steam_dir: "{{ home }}/steamcmd"
-    steam_password: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          36383861316535363530346361643439373262343438643365323236656430633461616164353930
-          3438373433636666356566343034613033393535383464330a333834353539646565383361383236
-          65396537366465636232366563656166356132633838366465666132656338323834626162313436
-          3365326635353837320a356261633236623732366632336232646135616265303364633730376130
-          3066
     workshop_checker:
       mail: 'updatebot@zeusops.com'
       password: !vault |
@@ -44,9 +36,9 @@
 
     webhook_url: 'https://discord.com/api/webhooks/{{ workshop_checker.webhook_secret }}'
     repos:
-    - { name: server-handling, dest: "{{ repodir }}" }
+    - { name: server-handling, dest: "{{ repodir }}", branch: template }
     - { name: modlists, dest: "{{ repodir }}/modlists" }
-    - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
+    - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker", branch: template }
     - { name: userconfig, dest: "{{ link }}/userconfig" }
     # The profiles repo gets modified every time the server runs -> can't be
     # pulled automatically because of local changes
@@ -57,18 +49,14 @@
     symlinks:
     - { src: "{{ link }}", dest: "{{ home }}/link" }
     - { src: "{{ repodir }}/modlists", dest: "{{ home }}/modlists" }
-    - { src: "{{ server }}/base-installation", dest: "{{ home }}/arma3" }
+    - { src: "{{ armadir }}", dest: "{{ home }}/arma3" }
 
 
   tasks:
   - name: Create mission upload group
-    become: yes
-    become_user: root
     ansible.builtin.group:
       name: mission_upload
   - name: Create user
-    become: yes
-    become_user: root
     ansible.builtin.user:
       name: "{{ user }}"
       system: yes
@@ -77,8 +65,6 @@
       groups: mission_upload
       append: yes
   - name: Install rename
-    become: yes
-    become_user: root
     ansible.builtin.apt:
       name: rename
       update_cache: yes
@@ -86,187 +72,198 @@
   # UFW
   # TODO: move into a role
   - name: Install UFW apps
-    become: yes
-    become_user: root
     ansible.builtin.copy:
       src: "files/ufw/applications.d/{{ item.file }}"
       dest: "/etc/ufw/applications.d/{{ item.file }}"
     loop: "{{ ufw_apps }}"
   - name: Enable UFW rules
-    become: yes
-    become_user: root
     community.general.ufw:
       rule: allow
       name: "{{ item.app }}"
     loop: "{{ ufw_apps }}"
 
 
-  - name: Set PATH
-    ansible.builtin.lineinfile:
-      path: "{{ home }}/.bashrc"
-      line: "{{ item }}"
-    loop:
-    - "PATH={{ repodir }}/bin:$PATH"
-    - "export STEAM_DIR={{ steam_dir }}"
-  - name: Set git configs
-    community.general.git_config:
-      scope: global
-      name: "{{ item.config }}"
-      value: "{{ item.value }}"
-    loop:
-    - { config: user.name,  value: Sami Laine }
-    - { config: user.email, value: sami.v.laine@gmail.com }
-
-  - name: Create SSH directory
-    ansible.builtin.file:
-      path: "{{ home }}/.ssh"
-      state: directory
-  - name: Install SSH dependency
-    ansible.builtin.pip:
-      name: stormssh
-  - name: Generate SSH deploy keys
-    community.crypto.openssh_keypair:
-      type: ed25519
-      path: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
-      comment: "{{ user }}@{{ ansible_hostname }}#{{ item.name }}"
-    loop: "{{ repos }}"
-    register: sshkey
-  - name: Print keys
-    when: sshkey.changed
-    # TODO: format this in a more beautiful way
-    debug:
-      #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
-      msg: "SSH key: {{ item }}"
-    loop: "{{ sshkey | json_query('results[*].[public_key, comment]') | json_query(\"[*].join(' ', @)\")  }}"
-    loop_control:
-      label: 'key'
-  - name: Prompt to add deploy keys
-    when: sshkey.changed
-    ansible.builtin.pause:
-      prompt: "add the above keys to GitHub before continuing"
-
-  - name: Create SSH configs
-    community.general.ssh_config:
-      user: "{{ user }}"
-      host: "github.com-{{ item.name }}"
-      hostname: github.com
-      identity_file: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
-    loop: "{{ repos }}"
-
-  - name: Clone repos
-    ansible.builtin.git:
-      repo: "git@github.com-{{ item.name }}:zeusops/{{ item.name }}.git"
-      dest: "{{ item.dest }}"
-      accept_newhostkey: yes
-      version: "{{ item.branch | d('hestia') }}"
-      # Submodules are cloned manually because we want to set the SSH remote
-      # address instead of HTTPS
-      recursive: no
-      update: "{{ item.pull_updates | d('yes') }}"
-    loop: "{{ repos }}"
-  - name: Install workshop-checker dependencies
-    ansible.builtin.pip:
-      requirements: "{{ repodir }}/bin/internal/workshop-checker/requirements.txt"
-      virtualenv: "{{ repodir }}/bin/internal/workshop-checker/venv"
-  - name: Install preset-convert dependencies
-    ansible.builtin.pip:
-      requirements: "{{ home }}/preset-convert/requirements.txt"
-      virtualenv: "{{ home }}/preset-convert/venv"
-
-  - name: Create workshop-checker config
-    ansible.builtin.template:
-      src: files/arma/workshop-checker/secret.py.j2
-      dest: "{{ repodir }}/bin/internal/workshop-checker/secret.py"
-      mode: '0600'
-    vars:
-      mail: "{{ workshop_checker.mail }}"
-      password: "{{ workshop_checker.password }}"
-      recipients: "{{ workshop_checker.recipients }}"
-      #webhook_url: "{{ webhook_url }}"
-
-  - name: Create cronjob to check mod updates
+  - name: Non-privileged tasks
     become: yes
-    become_user: root
-    ansible.builtin.cron:
-      name: Check for mod updates
-      cron_file: check-mod-upates
-      minute: "*/15"
-      user: "{{ user }}"
-      job: "{{ repodir }}/bin/update-mods.sh main --check-only --notify --no-mail > /dev/null"
+    become_user: "{{ user }}"
+    block:
+    - name: Setup bashrc
+      ansible.builtin.lineinfile:
+        path: "{{ home }}/.bashrc"
+        line: "{{ item }}"
+      loop:
+      - "PATH={{ repodir }}/bin:$PATH"
+      - "export STEAM_DIR={{ steam_dir }}"
+    - name: Set git configs
+      community.general.git_config:
+        scope: global
+        name: "{{ item.config }}"
+        value: "{{ item.value }}"
+      loop:
+      - { config: user.name,  value: Sami Laine }
+      - { config: user.email, value: sami.v.laine@gmail.com }
 
-  - name: Symlink server-handling
-    ansible.builtin.file:
-      src: "{{ repodir }}"
-      dest: "{{ item }}"
-      state: link
-    loop:
-     - "{{ home }}/files"
-     - "{{ server }}/files"
-  - name: Other symlinks
-    ansible.builtin.file:
-      src: "{{ item.src }}"
-      dest: "{{ item.dest }}"
-      state: link
-    loop: "{{ symlinks }}"
+    - name: Create SSH directory
+      ansible.builtin.file:
+        path: "{{ home }}/.ssh"
+        state: directory
+    - name: Install SSH dependency
+      ansible.builtin.pip:
+        name: stormssh
+    - name: Generate SSH deploy keys
+      community.crypto.openssh_keypair:
+        type: ed25519
+        path: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
+        comment: "{{ user }}@{{ ansible_hostname }}#{{ item.name }}"
+      loop: "{{ repos }}"
+      register: sshkey
+    - name: Print keys
+      when: sshkey.changed
+      # TODO: format this in a more beautiful way
+      debug:
+        #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
+        msg: "SSH key: {{ item }}"
+      loop: "{{ sshkey | json_query('results[*].[public_key, comment]') | json_query(\"[*].join(' ', @)\")  }}"
+      loop_control:
+        label: 'key'
+    - name: Prompt to add deploy keys
+      when: sshkey.changed
+      ansible.builtin.pause:
+        prompt: "add the above keys to GitHub before continuing"
 
-  - name: Install steamcmd
-    become: yes
-    become_user: root
-    import_role:
-      name: lutangar.steamcmd
-    vars:
-      # FIXME: this doesn't actually override the variable as expected, had to
-      # truncate vars/Debian.yml in the role for this to apply
-      steamcmd_packages:
-      - lib32gcc-s1
-      steamcmd_create_user: no
-      steamcmd_user: "{{ user }}"
-      steamcmd_user_home: "{{ home }}/"
-      steamcmd_directory: "{{ steam_dir }}/"
-      steamcmd_steam:
-        username: zeusoperations
-        password: "{{ steam_password }}"
+    - name: Create SSH configs
+      community.general.ssh_config:
+        user: "{{ user }}"
+        host: "github.com-{{ item.name }}"
+        hostname: github.com
+        identity_file: "{{ home }}/.ssh/{{ item.name }}_deploy_key"
+      loop: "{{ repos }}"
 
-  - name: Set mpmissions permissions
-    ansible.builtin.file:
-      path: "{{ link }}/mpmissions"
-      state: directory
-      mode: 02770
-      group: mission_upload
-  - name: Set home permissions
-    ansible.builtin.file:
-      path: "{{ home }}"
-      state: directory
-      mode: "o+x"
+    - name: Clone repos
+      ansible.builtin.git:
+        repo: "git@github.com-{{ item.name }}:zeusops/{{ item.name }}.git"
+        dest: "{{ item.dest }}"
+        accept_newhostkey: yes
+        version: "{{ item.branch | d('hestia') }}"
+        # Submodules are cloned manually because we want to set the SSH remote
+        # address instead of HTTPS
+        recursive: no
+        update: "{{ item.pull_updates | d('yes') }}"
+      loop: "{{ repos }}"
+    - name: Install workshop-checker dependencies
+      block:
+      - name: Template requirements.txt
+        ansible.builtin.template:
+          src: files/arma/workshop-checker/requirements.txt.j2
+          dest: "{{ home }}/workshop-checker-requirements.txt"
+        #vars:
+        #  repodir: "{{ repodir }}"
+      - name: Pip install
+        ansible.builtin.pip:
+          requirements: "{{ home }}/workshop-checker-requirements.txt"
+          virtualenv: "{{ repodir }}/bin/internal/workshop-checker/.venv"
+    - name: Install preset-convert dependencies
+      ansible.builtin.pip:
+        requirements: "{{ home }}/preset-convert/requirements.txt"
+        virtualenv: "{{ home }}/preset-convert/venv"
 
-  - name: Create arma systemd service
-    become: yes
-    become_user: root
-    ansible.builtin.template:
-      src: files/arma/systemd.service.j2
-      dest: /etc/systemd/system/arma@.service
-    vars:
-      bin: "{{ repodir }}/bin"
-      group: "{{ user }}"
-      workdir: "{{ server }}/base-installation"
-    notify:
-    - Reload systemd
-  - name: Enable arma service
-    become: yes
-    become_user: root
-    ansible.builtin.service:
-      #state: started
-      enabled: yes
-      name: arma@main.service
-  - name: Create cronjob to start HCs
-    become: yes
-    become_user: root
-    ansible.builtin.cron:
-      name: Start HCs after boot
-      cron_file: start-hcs
-      special_time: reboot
-      user: root
-      job: sleep 120 ; for x in 1 2 3; do systemctl start arma@main-hc$x; sleep 5; done
+    - name: Create workshop-checker config
+      ansible.builtin.template:
+        src: files/arma/workshop-checker/secret.py.j2
+        dest: "{{ repodir }}/bin/internal/workshop-checker/secret.py"
+        mode: '0600'
+      vars:
+        mail: "{{ workshop_checker.mail }}"
+        password: "{{ workshop_checker.password }}"
+        recipients: "{{ workshop_checker.recipients }}"
+        #webhook_url: "{{ webhook_url }}"
+
+    - name: Create Arma install directory
+      ansible.builtin.file:
+        path: "{{ armadir }}"
+        state: directory
+
+    - name: Symlink server-handling
+      ansible.builtin.file:
+        src: "{{ repodir }}"
+        dest: "{{ item }}"
+        state: link
+      loop:
+       - "{{ home }}/files"
+       - "{{ server }}/files"
+    - name: Other symlinks
+      ansible.builtin.file:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        state: link
+      loop: "{{ symlinks }}"
+
+    - name: Set home permissions
+      ansible.builtin.file:
+        path: "{{ home }}"
+        state: directory
+        mode: "o+x"
+
+    - name: Create mod install directory
+      ansible.builtin.file:
+        path: "{{ steam_dir }}/mods"
+        state: directory
+
+  - name: Privileged tasks
+    block:
+    - name: Create mpmissions and set permissions
+      ansible.builtin.file:
+        path: "{{ link }}/mpmissions"
+        state: directory
+        mode: 02770
+        owner: "{{ user }}"
+        group: mission_upload
+
+    - name: Create cronjob to check mod updates
+      ansible.builtin.cron:
+        name: Check for mod updates
+        cron_file: check-mod-upates
+        minute: "*/15"
+        user: "{{ user }}"
+        job: "{{ repodir }}/bin/update-mods.sh main --check-only --notify --no-mail > /dev/null"
+
+    - name: Install steamcmd
+      import_role:
+        name: lutangar.steamcmd
+      vars:
+        # FIXME: this doesn't actually override the variable as expected, had to
+        # truncate vars/Debian.yml in the role for this to apply
+        steamcmd_packages:
+        - lib32gcc-s1
+        steamcmd_create_user: no
+        steamcmd_user: "{{ user }}"
+        steamcmd_user_home: "{{ home }}/"
+        steamcmd_directory: "{{ steam_dir }}/"
+        steamcmd_steam:
+          username: anonymous
+
+    - name: Create Arma systemd service
+      ansible.builtin.template:
+        src: files/arma/systemd.service.j2
+        dest: "/etc/systemd/system/{{ user }}@.service"
+      vars:
+        bin: "{{ repodir }}/bin"
+        group: "{{ user }}"
+        workdir: "{{ server }}/base-installation"
+      notify:
+      - Reload systemd
+    - name: Enable Arma service
+      ansible.builtin.service:
+        #state: started
+        enabled: yes
+        name: "{{ user }}@main.service"
+    - name: Create cronjob to start HCs
+      ansible.builtin.cron:
+        name: Start HCs after boot
+        cron_file: start-hcs
+        special_time: reboot
+        user: root
+        job: "sleep 120 ; for x in 1 2 3; do systemctl start {{ user }}@main-hc$x; sleep 5; done"
 
   handlers:
   - name: Reload systemd
