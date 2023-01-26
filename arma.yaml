@@ -170,7 +170,7 @@
     - name: Create workshop-checker config
       ansible.builtin.template:
         src: files/arma/workshop-checker/secret.py.j2
-        dest: "{{ repodir }}/bin/internal/workshop-checker/secret.py"
+        dest: "{{ repodir }}/bin/internal/workshop-checker/src/workshop_checker/secret.py"
         mode: '0600'
       vars:
         mail: "{{ workshop_checker.mail }}"
