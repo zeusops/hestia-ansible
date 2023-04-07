@@ -58,6 +58,8 @@
         - debian-goodies
         - mosh
         - mailutils
+        # vidir
+        - moreutils
         - postfix
         - xauth
       update_cache: true
