@@ -16,6 +16,7 @@
     git_configs:
     - { config: user.name,  value: Sami Laine }
     - { config: user.email, value: sami.v.laine@gmail.com }
+    mail_domain: hestia.zeusops.com
 
   tasks:
   - name: Add cockpit-navigator repo
@@ -146,7 +147,7 @@
     - name: Add catch-all alias for root
       ansible.builtin.lineinfile:
         dest: /etc/postfix/virtual
-        line: "@hestia.zeusops.com root"
+        line: "@{{ mail_domain }} root"
         state: present
         mode: "0644"
         create: yes
