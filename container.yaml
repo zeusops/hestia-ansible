@@ -2,10 +2,31 @@
 - name: Manage containers
   hosts: containerhost
 
+
+  pre_tasks:
+  - name: Create data directories
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      owner: root
+      group: root
+    loop:
+    - /opt/wakapi/data
+    - /opt/ocap/records
+    - /opt/ocap/maps
+    - /opt/ocap/database
   roles:
   - chasinglogic.podman
 
   vars:
+    secrets:
+      ocap: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        36313935633535373862303964376531356132613635646332353237636365373631643063393363
+        3166313962633130383761353534303664623836333230630a373633396262646333343564363663
+        61316336356261356539333635613535363966343836633966363861616466616336653730313237
+        3133396663656565310a373831646135393861663962393533643166326435616563383532366264
+        6166
     podman_services:
     - image_name: n1try/wakapi
       description: Wakapi server
@@ -14,6 +35,20 @@
       volumes:
       - /opt/wakapi/data:/data
       service_name: wakapi
+      after:
+      - network.target
+      timeout_start_sec: 1m
+    - image_name: ghcr.io/ocap2/web
+      service_name: ocap
+      description: OCAP server
+      publish:
+      - 127.0.0.1:5000:5000
+      volumes:
+      - /opt/ocap/records:/var/lib/ocap/data
+      - /opt/ocap/maps:/var/lib/ocap/maps
+      - /opt/ocap/database:/var/lib/ocap/db
+      env_vars:
+      - "OCAP_SECRET={{ secrets['ocap'] }}"
       after:
       - network.target
       timeout_start_sec: 1m
