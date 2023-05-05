@@ -36,14 +36,15 @@
 
     webhook_url: 'https://discord.com/api/webhooks/{{ workshop_checker.webhook_secret }}'
     repos:
-    - { name: server-handling, dest: "{{ repodir }}", branch: template }
-    - { name: modlists, dest: "{{ repodir }}/modlists", branch: main }
-    - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker", branch: template }
+    - { name: server-handling, dest: "{{ repodir }}" }
+    - { name: modlists, dest: "{{ repodir }}/modlists" }
+    - { name: workshop-checker, dest: "{{ repodir }}/bin/internal/workshop-checker" }
     - { name: userconfig, dest: "{{ link }}/userconfig" }
     # The profiles repo gets modified every time the server runs -> can't be
     # pulled automatically because of local changes
-    - { name: poseidon-profiles, dest: "{{ link }}/profiles", branch: main, pull_updates: no }
-    - { name: mod-preset-convert, dest: "{{ home }}/preset-convert", branch: main }
+    - { name: poseidon-profiles, dest: "{{ link }}/profiles", pull_updates: no }
+    - { name: mod-preset-convert, dest: "{{ home }}/preset-convert" }
+    # - { name: example, dest: "{{ home }}/repo", branch: test, pull_updates: no }
     ufw_apps:
     - { file: arma-server, app: Arma }
     symlinks:
@@ -144,7 +145,7 @@
         repo: "git@github.com-{{ item.name }}:zeusops/{{ item.name }}.git"
         dest: "{{ item.dest }}"
         accept_newhostkey: yes
-        version: "{{ item.branch | d('hestia') }}"
+        version: "{{ item.branch | d('main') }}"
         # Submodules are cloned manually because we want to set the SSH remote
         # address instead of HTTPS
         recursive: no
