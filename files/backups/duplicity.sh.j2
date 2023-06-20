@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -euo pipefail
+
+#MODE="full"
+#MODE="incremental"
+MODE="--full-if-older-than 2M"
+
+MAX_AGE_MONTHS="3M"
+
+# Host Config
+HOST="{{ backups.user }}@{{ backups.user }}.your-storagebox.de"
+
+export PASSPHRASE="{{ backups.password }}"
+
+run_duplicity() {
+  src=${1:-$src}
+  exclude=${2:-${exclude:-}}
+
+  echo "Backing up $src in mode $MODE to target $HOST..."
+  echo "Start: $(date)"
+  duplicity $MODE $exclude $src sftp://$HOST/backups$src
+  echo "End: $(date)"
+}
+
+remove_old() {
+  echo "Removing backups older than $MAX_AGE_MONTHS months..."
+  for x in $normal $bots; do
+    duplicity remove-older-than $MAX_AGE_MONTHS --force sftp://$HOST/backups$x
+  done
+}
+
+main() {
+  normal="/etc /var/www /var/mail /srv/teamspeak /srv/terraria /srv/webhook /srv/minecraft"
+  bots="/srv/operationbot /srv/missionbot /srv/zeusopsbot /srv/tarkovbot"
+
+  for x in $normal; do
+    # Normal services, backup up everything
+    run_duplicity "$x"
+  done
+
+  for x in $bots; do
+    # Python bots, ignore the virtual environment
+    run_duplicity "$x" "--exclude $x/venv"
+  done
+
+  echo "Backing up arma in mode $MODE to target $HOST..."
+  echo "Start: $(date)"
+  duplicity $MODE \
+    --exclude /srv/arma/steamcmd \
+    --exclude /srv/arma/server/base-installation \
+    --exclude /srv/arma/.vscode-server \
+    --exclude /srv/arma/server/server-handling/bin/internal/workshop-checker/venv \
+    --exclude /srv/arma/server/server-handling/bin/internal/workshop-checker/.venv \
+    --exclude /srv/arma/Steam \
+    --exclude /srv/arma/preset-convert/venv \
+    /srv/arma \
+    sftp://$HOST/backups/srv/arma
+  echo "End: $(date)"
+
+  remove_old
+
+  echo "Done."
+}
+
+main
+
+unset PASSPHRASE

@@ -17,6 +17,22 @@
     - { config: user.name,  value: Sami Laine }
     - { config: user.email, value: sami.v.laine@gmail.com }
     mail_domain: hestia.zeusops.com
+    backups:
+      user: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        64663337373164303239393731323964366263383230383038353833373138623066343233383537
+        3330623062643336366338306564306534633265626537390a366434383762643939333936663139
+        63623530653835633264356636326333303234346134366661383337353561326462356539306439
+        3532623934323932320a343461623338376233353964386438376364666562396435316630353563
+        6365
+      password: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        31333763663730653765396339653865666630336465373133626138373965626635643235333962
+        6631303839356432613839623730333939313738363261330a366233373134323166356139346162
+        31346562653066343430383430363662343239643265623231323339346539653062396136323562
+        3564663230313766310a633061336264383664633231353166616136613432353138383530373634
+        66663635616465323231353330653762346534353761623034666264386366656238623766326439
+        6433663038383764353333303533346235643466386132653261
 
   tasks:
   - name: Add cockpit-navigator repo
@@ -62,6 +78,8 @@
         - moreutils
         - postfix
         - xauth
+        # for backups
+        - duplicity
       update_cache: true
   - name: Set git default branch
     community.general.git_config:
@@ -155,6 +173,26 @@
         create: yes
       notify:
       - Rebuild virtual.db
+  - name: Setup backups
+    block:
+    - name: Install backup script
+      ansible.builtin.template:
+        src: files/backups/duplicity.sh.j2
+        dest: /usr/libexec/duplicity.sh
+        mode: '0700'
+      no_log: yes
+    - name: Create backup log directory
+      ansible.builtin.file:
+        state: directory
+        path: /var/log/backups
+    - name: Create backup cronjob
+      ansible.builtin.cron:
+        name: Back up to storagebox
+        cron_file: backup
+        hour: 4
+        minute: 13
+        user: root
+        job: "/usr/libexec/duplicity.sh > /var/log/backups/$(date -I).log"
 
 
   # ====== handlers ======
