@@ -265,6 +265,14 @@
         special_time: reboot
         user: root
         job: "sleep 120 ; for x in 1 2 3; do systemctl start {{ user }}@main-hc$x; sleep 5; done"
+    - name: Create cronjob to back up Antistasi profile
+      ansible.builtin.cron:
+        name: Back up Antistasi profile
+        cron_file: back-up-antistasi
+        minute: "*/15"
+        user: "{{ user }}"
+        job: "cp ~{{ user }}/link/profiles/server/home/2023-05-15-antistasi/2023-05-15-antistasi.vars.Arma3Profile ~{{ user }}/antistasi-backup/backup_$(date -Iseconds).vars.Arma3Profile"
+
 
   handlers:
   - name: Reload systemd
