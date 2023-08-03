@@ -2,4 +2,7 @@ bot:
   token: "{{ tokens.zeusopsbot }}"
 cogs:
   meetingnotes:
-    gh_token: "{{ tokens.gh_token }}"
+    hackmd:
+      token: "{{ tokens.hackmd }}"
+    github_gist:
+      token: "{{ tokens.github }}"
