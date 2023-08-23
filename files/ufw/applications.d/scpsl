@@ -1,0 +1,4 @@
+[SCP Secret Laboratory]
+title=SCP: Secret Laboratory
+description=SCP: Secret Laboratory server
+ports=7777/udp
