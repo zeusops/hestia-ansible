@@ -15,6 +15,13 @@
     - /opt/ocap/records
     - /opt/ocap/maps
     - /opt/ocap/database
+  - name: Create arma-notifier env file
+    ansible.builtin.template:
+      src: files/containers/arma-notifier-env.j2
+      dest: "/etc/arma-notifier-env"
+      mode: "0500"
+    vars:
+      token: "{{ secrets['arma-notifier'] }}"
   roles:
   - chasinglogic.podman
 
@@ -27,6 +34,16 @@
         61316336356261356539333635613535363966343836633966363861616466616336653730313237
         3133396663656565310a373831646135393861663962393533643166326435616563383532366264
         6166
+      arma-notifier: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        38323232653661663530373530333531333639613261613630356166363134623135323337373561
+        3631376239313938623930333234646363653765633766310a376335316364616436663938313631
+        35643063316238363863666634303832663464643930356330636163613039623930653532383963
+        3663653230643232340a646635663566393436396538666635396331663465363539303237386164
+        62343835303531613964363761363733396161376430366335373632383030353437646434326239
+        31663065613361323665346139343964393963646265383032333839653535323963663730643465
+        38326433656662323265353263633830313435326439623135623839393036353233303862633362
+        61376632303765316633
     podman_services:
     - image_name: n1try/wakapi
       description: Wakapi server
@@ -39,6 +56,7 @@
         wanted_by:
         - network.target
       timeout_start_sec: 1m
+
     - image_name: ghcr.io/ocap2/web
       service_name: ocap
       description: OCAP server
@@ -54,5 +72,17 @@
         wanted_by:
         - network.target
       timeout_start_sec: 1m
+
+    - image_name: docker.io/gehock/arma-notifier
+      image_tag: 0.1.0
+      service_name: arma-notifier
+      description: Arma notifier
+      volumes:
+      - /etc/arma-notifier-env:/.env
+      install:
+        wanted_by:
+        - network.target
+      timeout_start_sec: 1m
+
     # Don't run `apt upgrade` every time something changes
     podman_upgrade_system: no
