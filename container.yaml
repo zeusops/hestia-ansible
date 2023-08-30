@@ -35,8 +35,9 @@
       volumes:
       - /opt/wakapi/data:/data
       service_name: wakapi
-      after:
-      - network.target
+      install:
+        wanted_by:
+        - network.target
       timeout_start_sec: 1m
     - image_name: ghcr.io/ocap2/web
       service_name: ocap
@@ -49,8 +50,9 @@
       - /opt/ocap/database:/var/lib/ocap/db
       env_vars:
       - "OCAP_SECRET={{ secrets['ocap'] }}"
-      after:
-      - network.target
+      install:
+        wanted_by:
+        - network.target
       timeout_start_sec: 1m
     # Don't run `apt upgrade` every time something changes
     podman_upgrade_system: no
