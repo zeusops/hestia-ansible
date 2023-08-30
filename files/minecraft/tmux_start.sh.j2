@@ -1,4 +1,5 @@
 #!/bin/sh
+{{ ansible_managed | comment }}
 
 byobu-tmux new -d -s mc
 tmux rename-window -t mc:0 server

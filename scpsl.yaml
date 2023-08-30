@@ -80,8 +80,8 @@
         cmd: "{{ steam_dir }}/steamcmd.sh +force_install_dir {{ server }} +login anonymous +app_update 996560 +quit"
         creates: "{{ server }}/SCPSL.x86_64"
     - name: Add tmux script
-      ansible.builtin.copy:
-        src: files/scpsl/tmux_start.sh
+      ansible.builtin.template:
+        src: files/scpsl/tmux_start.sh.j2
         dest: "{{ home }}/tmux_start.sh"
         mode: +x
     - name: Create reboot tmux task

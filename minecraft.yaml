@@ -25,8 +25,8 @@
       name:
         - openjdk-18-jre-headless
   - name: Add tmux script
-    ansible.builtin.copy:
-      src: files/minecraft/tmux_start.sh
+    ansible.builtin.template:
+      src: files/minecraft/tmux_start.sh.j2
       dest: "{{ home }}/tmux_start.sh"
   - name: Create reboot tmux task
     ansible.builtin.cron:

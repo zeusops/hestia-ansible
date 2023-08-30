@@ -1,5 +1,5 @@
 #!/bin/sh
-# Managed by Ansible
+{{ ansible_managed | comment }}
 
 byobu-tmux new -d -s scpsl
 tmux rename-window -t scpsl:0 server
