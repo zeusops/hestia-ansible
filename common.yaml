@@ -193,6 +193,13 @@
         minute: 13
         user: root
         job: "/usr/libexec/duplicity.sh > /var/log/backups/$(date -I).log"
+  - name: needrestart - mail to user
+    ansible.builtin.lineinfile:
+      dest: /etc/needrestart/notify.conf
+      line: "NR_NOTIFYD_DISABLE_MAIL='0'"
+      regexp: "NR_NOTIFYD_DISABLE_MAIL='1'"
+      state: present
+      mode: "0644"
 
 
   # ====== handlers ======
