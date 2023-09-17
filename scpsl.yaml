@@ -102,11 +102,11 @@
         hour: 16
         weekday: "5,6,7"
         user: "{{ user }}"
-        job: "tmux send-keys -t mc:server stop ENTER"
+        job: "tmux send-keys -t scpsl:server stop ENTER"
     - name: cron | Start server after ops
       ansible.builtin.cron:
         name: Start server after ops
-        minute: 15
+        minute: 5
         hour: 19
         weekday: "5,6,7"
         user: "{{ user }}"
