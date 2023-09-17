@@ -79,6 +79,11 @@
       ansible.builtin.command:
         cmd: "{{ steam_dir }}/steamcmd.sh +force_install_dir {{ server }} +login anonymous +app_update 996560 +quit"
         creates: "{{ server }}/SCPSL.x86_64"
+    - name: Add update script
+      ansible.builtin.template:
+        src: files/scpsl/update-server.sh.j2
+        dest: "{{ home }}/update-server.sh"
+        mode: +x
     - name: Add tmux script
       ansible.builtin.template:
         src: files/scpsl/tmux_start.sh.j2
