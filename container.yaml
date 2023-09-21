@@ -22,10 +22,12 @@
       mode: "0500"
     vars:
       token: "{{ secrets['arma-notifier'] }}"
+
   roles:
   - chasinglogic.podman
 
   vars:
+    operationbot_workdir: /srv/operationbot/operationbot
     secrets:
       ocap: !vault |
         $ANSIBLE_VAULT;1.1;AES256
@@ -79,6 +81,20 @@
       description: Arma notifier
       volumes:
       - /etc/arma-notifier-env:/.env
+      install:
+        wanted_by:
+        - network.target
+      timeout_start_sec: 1m
+
+    - image_name: docker.io/gehock/operationbot
+      image_tag: 0.41.0
+      service_name: operationbot
+      description: Operation Bot
+      volumes:
+      - "{{ operationbot_workdir }}/database:/app/database"
+      - "{{ operationbot_workdir }}/secret.py:/app/secret.py"
+      # Using the default config currently, no need to mount
+      # - "{{ operationbot_workdir }}/config.py:/app/config.py"
       install:
         wanted_by:
         - network.target

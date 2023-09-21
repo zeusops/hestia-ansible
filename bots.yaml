@@ -5,7 +5,7 @@
     bots:
     - { name: missionbot,   description: Mission bot,   module: null, file: config.py }
     - { name: operationbot, description: Operation bot, module: null, file: secret.py,
-        branch: legacy }
+        branch: main, install_deps: no, create_svc: no }
     - { name: tarkovbot,    description: Tarkov bot,    module: null, file: secret.py }
     - { name: zeusopsbot,   description: Zeusops bot,   module: bot,  file: config_local.yaml }
     tokens:
@@ -84,6 +84,8 @@
       repo: 'https://github.com/zeusops/{{ item.name }}.git'
       dest: "/srv/{{ item.name }}/{{ item.name }}"
     loop: "{{ bots }}"
+    # FIXME: This might crash the run if operationbot changes and the service
+    # doesn't exist
     register: bot_services
     notify: Restart bot services
   - name: Install bot dependencies
@@ -94,6 +96,7 @@
       requirements: "/srv/{{ item.name }}/{{ item.name }}/requirements.txt"
       virtualenv: "/srv/{{ item.name }}/venv"
     loop: "{{ bots }}"
+    when: item.install_deps | d(false)
     register: bot_services
     notify: Restart bot services
   - name: Create bot configs
@@ -116,6 +119,7 @@
       description: "{{ item.description }}"
       module: "{{ item.module }}"
     loop: "{{ bots }}"
+    when: item.create_svc | d(false)
     notify:
     - Reload systemd
   - name: Zeusopsbot dependencies
@@ -140,6 +144,7 @@
       enabled: yes
       name: "{{ item.name }}"
     loop: "{{ bots }}"
+    when: item.create_svc | d(false)
 
   - name: Install extractpbo dependencies
     ansible.builtin.apt:
