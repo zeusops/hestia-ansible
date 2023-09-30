@@ -56,7 +56,7 @@
     - image_name: n1try/wakapi
       description: Wakapi server
       publish:
-      - 127.0.0.1:3000:3000
+      - 127.0.0.1:3100:3000
       volumes:
       - /opt/wakapi/data:/data
       service_name: wakapi

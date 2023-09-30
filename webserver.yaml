@@ -45,7 +45,7 @@
         domains:
           - wakapi.gehock.fi
         upstreams:
-          - { backend_address: 127.0.0.1, backend_port: 3000 }
+          - { backend_address: 127.0.0.1, backend_port: 3100 }
         ssl: true
         letsencrypt: true
         letsencrypt_email: webmaster@zeusops.com
