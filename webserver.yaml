@@ -57,6 +57,14 @@
         ssl: true
         letsencrypt: true
         letsencrypt_email: webmaster@zeusops.com
+      wiki.zeusops.com:
+        domains:
+          - wiki.zeusops.com
+        upstreams:
+          - { backend_address: 127.0.0.1, backend_port: 3101 }
+        ssl: true
+        letsencrypt: true
+        letsencrypt_email: webmaster@zeusops.com
     # Without these the revproxy role will remove manually managed sites
     nginx_revproxy_remove_webroot_sites: no
     nginx_revproxy_de_activate_sites: no

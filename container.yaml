@@ -15,6 +15,12 @@
     - /opt/ocap/records
     - /opt/ocap/maps
     - /opt/ocap/database
+  - name: Create wiki-js directory
+    ansible.builtin.file:
+      path: /opt/wiki-js
+      state: directory
+      owner: 1000
+      group: 1000
   - name: Create arma-notifier env file
     ansible.builtin.template:
       src: files/containers/arma-notifier-env.j2
@@ -95,6 +101,22 @@
       - "{{ operationbot_workdir }}/secret.py:/app/secret.py"
       # Using the default config currently, no need to mount
       # - "{{ operationbot_workdir }}/config.py:/app/config.py"
+      install:
+        wanted_by:
+        - network.target
+      timeout_start_sec: 1m
+
+    - image_name: ghcr.io/requarks/wiki
+      image_tag: 2.5.300
+      service_name: wiki-js
+      description: Wiki.js
+      volumes:
+      - "/opt/wiki-js:/data"
+      env_vars:
+      - DB_TYPE=sqlite
+      - DB_FILEPATH=/data/wiki-js.db
+      publish:
+      - 3101:3000
       install:
         wanted_by:
         - network.target
