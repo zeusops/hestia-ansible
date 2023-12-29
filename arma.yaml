@@ -236,6 +236,25 @@
         user: "{{ user }}"
         job: "{{ repodir }}/bin/update-mods.sh optional --check-only --notify --no-mail > /dev/null"
 
+    - name: Shut down antistasi before ops
+      ansible.builtin.cron:
+        name: Shut down antistasi before ops
+        cron_file: shut-down-antistasi
+        minute: "30"
+        hour: 18
+        weekday: "5,6,7"
+        user: root
+        job: "systemctl stop arma@antistasi"
+    - name: Start up antistasi after ops
+      ansible.builtin.cron:
+        name: Start up antistasi before ops
+        cron_file: start-up-antistasi
+        minute: "15"
+        hour: 21
+        weekday: "5,6,7"
+        user: root
+        job: "systemctl start arma@antistasi"
+
     - name: Install steamcmd
       import_role:
         name: lutangar.steamcmd
@@ -279,7 +298,7 @@
         cron_file: back-up-antistasi
         minute: "*/15"
         user: "{{ user }}"
-        job: "cp ~{{ user }}/link/profiles/server/home/2023-05-15-antistasi/2023-05-15-antistasi.vars.Arma3Profile ~{{ user }}/antistasi-backup/backup_$(date -Iseconds).vars.Arma3Profile"
+        job: "cp ~{{ user }}/link/profiles/server/home/2023-12-29-antistasi/2023-12-29-antistasi.vars.Arma3Profile ~{{ user }}/antistasi-backup/backup_$(date -Iseconds).vars.Arma3Profile"
 
 
   handlers:
