@@ -220,13 +220,21 @@
         owner: "{{ user }}"
         group: mission_upload
 
-    - name: Create cronjob to check mod updates
+    - name: Create cronjob to check main mod updates
       ansible.builtin.cron:
-        name: Check for mod updates
+        name: Check for main mod updates
         cron_file: check-mod-upates
         minute: "*/15"
         user: "{{ user }}"
         job: "{{ repodir }}/bin/update-mods.sh main --check-only --notify --no-mail > /dev/null"
+
+    - name: Create cronjob to check optional mod updates
+      ansible.builtin.cron:
+        name: Check for optional mod updates
+        cron_file: check-optional-mod-upates
+        minute: "*/15+5"
+        user: "{{ user }}"
+        job: "{{ repodir }}/bin/update-mods.sh optional --check-only --notify --no-mail > /dev/null"
 
     - name: Install steamcmd
       import_role:
