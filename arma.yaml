@@ -255,6 +255,25 @@
         user: root
         job: "systemctl start arma@antistasi"
 
+    - name: Shut down sideop before ops
+      ansible.builtin.cron:
+        name: Shut down sideop before ops
+        cron_file: shut-down-sideop
+        minute: "30"
+        hour: 18
+        weekday: "5,6,7"
+        user: root
+        job: "systemctl stop arma@sideop"
+    - name: Start up sideop after ops
+      ansible.builtin.cron:
+        name: Start up sideop before ops
+        cron_file: start-up-sideop
+        minute: "15"
+        hour: 21
+        weekday: "5,6,7"
+        user: root
+        job: "systemctl start arma@sideop"
+
     - name: Install steamcmd
       import_role:
         name: lutangar.steamcmd
