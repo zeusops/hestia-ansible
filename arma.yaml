@@ -245,6 +245,7 @@
         weekday: "5,6,7"
         user: root
         job: "systemctl stop arma@antistasi"
+        disabled: true
     - name: Start up antistasi after ops
       ansible.builtin.cron:
         name: Start up antistasi before ops
@@ -254,6 +255,7 @@
         weekday: "5,6,7"
         user: root
         job: "systemctl start arma@antistasi"
+        disabled: true
 
     - name: Shut down sideop before ops
       ansible.builtin.cron:
@@ -318,6 +320,7 @@
         minute: "*/15"
         user: "{{ user }}"
         job: "cp ~{{ user }}/link/profiles/server/home/2023-12-29-antistasi/2023-12-29-antistasi.vars.Arma3Profile ~{{ user }}/antistasi-backup/backup_$(date -Iseconds).vars.Arma3Profile"
+        disabled: true
 
 
   handlers:
