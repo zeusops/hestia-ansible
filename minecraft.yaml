@@ -5,11 +5,14 @@
   vars:
     service_name: minecraft
     home: "/srv/{{ service_name }}"
-    server_name: 2022-11-03-gehock-test
+    server_name: 2023-06-05-gehock-test
     server_dir: "{{ home }}/{{ server_name }}"
     mc_version: 1.18.2
     forge_version: 40.1.68
     hash: 01192708acf889c7ed78f0cfc27446c947e4c5b2
+    install_type: vanilla
+    #worldpath: "{{ home }}/worlds"
+    #worldname: "myworld"
     ufw_apps:
     - { file: minecraft-server, app: Minecraft }
 
@@ -40,47 +43,95 @@
       path: "{{ server_dir }}"
       state: directory
     become: yes
-  - name: Check if start script exists
-    ansible.builtin.stat:
-      path: "{{ server_dir }}/run.sh"
-    register: target
-  - ansible.builtin.tempfile:
-      path: "{{ server_dir }}"
-      state: file
-      suffix: .jar
-    register: downloaded_file
-    become: yes
-    when: not target.stat.exists
-  - name: Download server
-    ansible.builtin.get_url:
-      url: "https://maven.minecraftforge.net/net/minecraftforge/forge/{{ mc_version }}-{{ forge_version }}/forge-{{ mc_version }}-{{ forge_version }}-installer.jar"
-      dest: "{{ downloaded_file.path }}"
-      checksum: "sha1:{{ hash }}"
-    become: yes
-    when: downloaded_file is changed
-  - name: Install server
-    ansible.builtin.command:
-      cmd: java -jar "{{ downloaded_file.path }}" --installServer
-      creates: "{{ server_dir }}/run.sh"
-      chdir: "{{ server_dir }}"
-    become: yes
-    when: downloaded_file is changed
-  - name: Delete installer
-    ansible.builtin.file:
-      state: absent
-      path: "{{ downloaded_file.path }}"
-    become: yes
-    when: downloaded_file is changed
   - name: Accept eula
     ansible.builtin.copy:
       content: eula=true
       dest: "{{ server_dir }}/eula.txt"
     become: yes
-  - name: Copy wrapper
-    ansible.builtin.copy:
-      src: files/minecraft/wrap.sh
-      dest: "{{ server_dir }}/wrap.sh"
-    become: yes
+
+  - name: Install forge
+    block:
+    - name: Check if start script exists
+      ansible.builtin.stat:
+        path: "{{ server_dir }}/run.sh"
+      register: target
+    - ansible.builtin.tempfile:
+        path: "{{ server_dir }}"
+        state: file
+        suffix: .jar
+      register: downloaded_file
+      become: yes
+      when: not target.stat.exists
+    - name: Download server
+      ansible.builtin.get_url:
+        url: "https://maven.minecraftforge.net/net/minecraftforge/forge/{{ mc_version }}-{{ forge_version }}/forge-{{ mc_version }}-{{ forge_version }}-installer.jar"
+        dest: "{{ downloaded_file.path }}"
+        checksum: "sha1:{{ hash }}"
+      become: yes
+      when: downloaded_file is changed
+    - name: Install server
+      ansible.builtin.command:
+        cmd: java -jar "{{ downloaded_file.path }}" --installServer
+        creates: "{{ server_dir }}/run.sh"
+        chdir: "{{ server_dir }}"
+      become: yes
+      when: downloaded_file is changed
+    - name: Delete installer
+      ansible.builtin.file:
+        state: absent
+        path: "{{ downloaded_file.path }}"
+      become: yes
+      when: downloaded_file is changed
+    - name: Copy wrapper
+      ansible.builtin.copy:
+        src: files/minecraft/wrap.sh
+        dest: "{{ server_dir }}/wrap.sh"
+      become: yes
+    when: install_type == "forge"
+
+  - name: Install vanilla
+    block:
+    - debug:
+        msg: this is vanilla
+    when: install_type == "vanilla"
+  #- name: Create operationbot backup crontab
+  #  ansible.builtin.cron:
+  #    name: Back up operationbot events
+  #    #cron_file: backup-operationbot
+  #    minute: "*/15"
+  #    user: operationbot
+  #    job: /srv/operationbot/operationbot/scripts/backup-events.sh > /dev/null
+  #- ansible.builtin.file:
+  #    state: absent
+  #    path: "{{ extract_dir.path }}"
+  #  when: downloaded_file is changed
+  #- name: Make server executable
+  #  ansible.builtin.file:
+  #    path: "{{ server_dir }}/TerrariaServer.bin.x86_64"
+  #    mode: u+x
+  #- name: Create config file
+  #  ansible.builtin.template:
+  #    src: files/terraria/serverconfig.txt.j2
+  #    dest: "{{ home }}/serverconfig.txt"
+  #    mode: 0600
+  #    owner: "{{ service_name }}"
+  #    group: "{{ service_name }}"
+  #- name: Create systemd service
+  #  ansible.builtin.template:
+  #    src: files/terraria/systemd.service.j2
+  #    dest: /etc/systemd/system/{{ service_name }}.service
+  #  notify:
+  #  - Reload systemd
+  #- name: Run terraria
+  #  ansible.builtin.systemd:
+  #    state: started
+  #    enabled: yes
+  #    name: "{{ service_name }}"
+  #- name: Install terrariad
+  #  ansible.builtin.template:
+  #    src: files/terraria/terrariad.j2
+  #    dest: /usr/local/bin/terrariad
+  #    mode: 0755
   # UFW
   # TODO: move into a role
   - name: Install UFW apps
