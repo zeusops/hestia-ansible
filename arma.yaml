@@ -275,6 +275,7 @@
         weekday: "5,6,7"
         user: root
         job: "systemctl start arma@sideop"
+        disabled: true
 
     - name: Install steamcmd
       import_role:
