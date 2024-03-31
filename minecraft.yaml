@@ -5,9 +5,9 @@
   vars:
     service_name: minecraft
     home: "/srv/{{ service_name }}"
-    server_name: 2023-06-05-gehock-test
+    server_name: 2024-03-17-miller
     server_dir: "{{ home }}/{{ server_name }}"
-    mc_version: 1.18.2
+    mc_version: 1.20.2
     forge_version: 40.1.68
     hash: 01192708acf889c7ed78f0cfc27446c947e4c5b2
     install_type: vanilla
