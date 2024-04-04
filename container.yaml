@@ -93,7 +93,7 @@
       timeout_start_sec: 1m
 
     - image_name: docker.io/gehock/operationbot
-      image_tag: v0.46.0
+      image_tag: v0.47.0
       service_name: operationbot
       description: Operation Bot
       volumes:
