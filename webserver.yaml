@@ -96,8 +96,9 @@
     - [co, "https://hackmd.io/@zeusops/HJhdktNJ0"]
     - [meetings, "https://hackmd.io/@zeusops/B1lXuftfu"]
     - [review, "https://docs.google.com/forms/d/e/1FAIpQLSfWY53jmyAKsOg12LZw4AqdL40IBynUJBp2I7du7BsmJX4yfQ/viewform"]
-    - [reviewresponses, "https://docs.google.com/spreadsheets/d/1_c2tc22Udwf2Nl-AOQD_qnwGFlULoLnLP7hx8Fns-ZE/edit?usp=sharing"]
-    - [hqresponses, "https://docs.google.com/spreadsheets/d/1BtosRxvotFQJfGNPnw_WuZENEpXtKBhx1v8DXLys25o/edit?usp=sharing"]
+    - [reviewresponses, "https://docs.google.com/spreadsheets/d/1_c2tc22Udwf2Nl-AOQD_qnwGFlULoLnLP7hx8Fns-ZE/edit"]
+    - [hqfeedback, "https://docs.google.com/forms/d/e/1FAIpQLSe8vSltxZALqHYp1AJIr8F45KgHQ6B_qLVijv8eaG_EEQ7BLA/viewform"]
+    - [hqresponses, "https://docs.google.com/spreadsheets/d/1BtosRxvotFQJfGNPnw_WuZENEpXtKBhx1v8DXLys25o/edit"]
     - [github, "https://github.com/zeusops"]
     - [coinfo, "https://docs.google.com/document/d/1mYguW7eceldh_mXQreNOOEHtThQ3GCRow4VyzqvrU6c/edit"]
     hetzner_dns_token: !vault |
