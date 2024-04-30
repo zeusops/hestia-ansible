@@ -1,6 +1,7 @@
 ---
 - name: Manage containers
   hosts: containerhost
+  gather_facts: yes
 
 
   pre_tasks:
@@ -15,6 +16,10 @@
     - /opt/ocap/records
     - /opt/ocap/maps
     - /opt/ocap/database
+    - /opt/reforger/configs
+    - /opt/reforger/profile
+    - /opt/reforger/addons
+    - /opt/reforger/installation
   - name: Create wiki-js directory
     ansible.builtin.file:
       path: /opt/wiki-js
@@ -33,7 +38,20 @@
   - chasinglogic.podman
 
   vars:
+    ufw_apps:
+    - { file: reforger, app: ArmaReforger }
     operationbot_workdir: /srv/operationbot/operationbot
+    reforger:
+      server_public_address: "{{ ansible_enp41s0.ipv4.address }}"
+      game_name: "Zeusops Reforger"
+      mods: "606B100247F5C709,5B3ED33ADA805340,5F2944B7474F043F,5965550F24A0C152,595F2BF2F44836FB,5964E0B3BB7410CE,5AB890B71D748750,5AB301290317994A,5ABD0CB57F7E9EB1,612C75A42442AB1F"
+      rcon_password: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        31376632353863333039383965623832613363346132633730663337373761376164633436393661
+        6538343230316236663930613438626461316265393430300a636266383633323165646164613931
+        37643038383334636337663664663332666530353035393861653934373535613232643439356161
+        3465386339323738340a616233363335323030366561383336383132386435316437393439343133
+        38386539653865333331633633343763343164623838303363333031613963363762
     secrets:
       ocap: !vault |
         $ANSIBLE_VAULT;1.1;AES256
@@ -122,5 +140,42 @@
         - network.target
       timeout_start_sec: 1m
 
+    - image_name: ghcr.io/acemod/arma-reforger
+      image_tag: latest
+      service_name: reforger
+      description: Arma Reforger
+      volumes:
+      # TODO: make dynamic based on a dictionary in vars
+      #- /opt/reforger/configs:/reforger/Configs
+      - /opt/reforger/profile:/home/profile
+      - /opt/reforger/installation:/reforger
+      env_vars:
+      - "SERVER_PUBLIC_ADDRESS={{ reforger.server_public_address }}"
+      - "GAME_NAME=\"{{ reforger.game_name }}\""
+      - "RCON_PASSWORD=\"{{ reforger.rcon_password }}\""
+      - "GAME_MODS_IDS_LIST=\"{{ reforger.mods }}\""
+      - "GAME_PASSWORD_ADMIN=zeusops"
+      - "SKIP_INSTALL=true"
+      publish:
+      - "2001:2001/udp"
+      - "17777:17777/udp"
+      - "19999:19999/udp"  # RCON
+      restart: "no"
+      network: host
+
+
     # Don't run `apt upgrade` every time something changes
     podman_upgrade_system: no
+
+  tasks:
+  # TODO: move into a role
+  - name: Install UFW apps
+    ansible.builtin.copy:
+      src: "files/ufw/applications.d/{{ item.file }}"
+      dest: "/etc/ufw/applications.d/{{ item.file }}"
+    loop: "{{ ufw_apps }}"
+  - name: Enable UFW rules
+    community.general.ufw:
+      rule: allow
+      name: "{{ item.app }}"
+    loop: "{{ ufw_apps }}"
