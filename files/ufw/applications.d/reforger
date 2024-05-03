@@ -1,0 +1,4 @@
+[ArmaReforger]
+title=Arma Reforger
+description=Arma Reforger
+ports=2001,17777,19999/udp
