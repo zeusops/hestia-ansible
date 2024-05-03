@@ -1,0 +1,74 @@
+{
+    "bindAddress": "0.0.0.0",
+    "bindPort": 2001,
+    "publicAddress": "{{ reforger.server_public_address }}",
+    "publicPort": {{ reforger.port }},
+    "a2s": {
+        "address": "0.0.0.0",
+        "port": {{ reforger.a2s_port }}
+    },
+    "rcon": {
+        "address": "0.0.0.0",
+        "port": {{ reforger.rcon_port }},
+        "password": "{{ reforger.rcon_password }}",
+        "permission": "admin"
+    },
+    "game": {
+        "name": "{{ reforger.game_name }}",
+        "password": "{{ reforger.game_password }}",
+        "passwordAdmin": "{{ reforger.game_password }}",
+        "admins": [],
+        "scenarioId": "{59AD59368755F41A}Missions/21_GM_Eden.conf",
+        "maxPlayers": 64,
+        "visible": true,
+        "supportedPlatforms": [
+            "PLATFORM_PC",
+            "PLATFORM_XBL"
+        ],
+        "gameProperties": {
+            "serverMaxViewDistance": 2500,
+            "serverMinGrassDistance": 50,
+            "networkViewDistance": 1000,
+            "disableThirdPerson": true,
+            "fastValidation": true,
+            "battlEye": true,
+            "missionHeader": {
+                "m_iPlayerCount": 40,
+                "m_eEditableGameFlags": 6,
+                "m_eDefaultGameFlags": 6
+            }
+        },
+        "mods": [
+            {
+                "modId": "606B100247F5C709"
+            },
+            {
+                "modId": "5B3ED33ADA805340"
+            },
+            {
+                "modId": "5F2944B7474F043F"
+            },
+            {
+                "modId": "5965550F24A0C152"
+            },
+            {
+                "modId": "595F2BF2F44836FB"
+            },
+            {
+                "modId": "5964E0B3BB7410CE"
+            },
+            {
+                "modId": "5AB890B71D748750"
+            },
+            {
+                "modId": "5AB301290317994A"
+            },
+            {
+                "modId": "5ABD0CB57F7E9EB1"
+            },
+            {
+                "modId": "612C75A42442AB1F"
+            }
+        ]
+    }
+}

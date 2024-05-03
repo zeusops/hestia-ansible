@@ -20,6 +20,7 @@
     - /opt/reforger/profile
     - /opt/reforger/addons
     - /opt/reforger/installation
+    - /opt/reforger/installation/Configs
   - name: Create wiki-js directory
     ansible.builtin.file:
       path: /opt/wiki-js
@@ -30,9 +31,15 @@
     ansible.builtin.template:
       src: files/containers/arma-notifier-env.j2
       dest: "/etc/arma-notifier-env"
-      mode: "0500"
+      mode: "0400"
     vars:
       token: "{{ secrets['arma-notifier'] }}"
+
+  - name: Create reforger config file
+    ansible.builtin.template:
+      src: files/containers/reforger-config.json.j2
+      dest: "/opt/reforger/installation/Configs/config.json"
+      mode: "0400"
 
   roles:
   - chasinglogic.podman
@@ -52,6 +59,10 @@
         37643038383334636337663664663332666530353035393861653934373535613232643439356161
         3465386339323738340a616233363335323030366561383336383132386435316437393439343133
         38386539653865333331633633343763343164623838303363333031613963363762
+      game_password: zeusops
+      port: 2001
+      rcon_port: 19999
+      a2s_port: 17777
     secrets:
       ocap: !vault |
         $ANSIBLE_VAULT;1.1;AES256
@@ -140,7 +151,7 @@
         - network.target
       timeout_start_sec: 1m
 
-    - image_name: ghcr.io/acemod/arma-reforger
+    - image_name: ghcr.io/gehock/arma-reforger
       image_tag: latest
       service_name: reforger
       description: Arma Reforger
@@ -150,12 +161,8 @@
       - /opt/reforger/profile:/home/profile
       - /opt/reforger/installation:/reforger
       env_vars:
-      - "SERVER_PUBLIC_ADDRESS={{ reforger.server_public_address }}"
-      - "GAME_NAME=\"{{ reforger.game_name }}\""
-      - "RCON_PASSWORD=\"{{ reforger.rcon_password }}\""
-      - "GAME_MODS_IDS_LIST=\"{{ reforger.mods }}\""
-      - "GAME_PASSWORD_ADMIN=zeusops"
       - "SKIP_INSTALL=true"
+      - "ARMA_CONFIG=config.json"
       publish:
       - "2001:2001/udp"
       - "17777:17777/udp"
