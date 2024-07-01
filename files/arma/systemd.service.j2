@@ -18,6 +18,7 @@ WorkingDirectory={{ workdir }}
 SyslogIdentifier=arma %i
 Restart=on-failure
 RestartSec=5
+KillSignal=SIGINT
 
 [Install]
 WantedBy=multi-user.target
