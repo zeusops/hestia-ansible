@@ -17,6 +17,8 @@
     - zeusops.com
     sites:
     - gehock.dy.fi
+    - gehock.com
+    - gehock.fi
 
     nginx_revproxy_sites:
       #default:
@@ -262,6 +264,11 @@
 
   # NOTE: site data is currently copied manually to /var/www/gehock.dy.fi
 
+  - name: Load local variables
+    ansible.builtin.include_vars:
+      file: vars/webserver-local.yaml
+    when: "'vars/webserver-local.yaml' is file"
+
   - name: Get site certificates using certbot
     ansible.builtin.command: |
       certbot
@@ -271,7 +278,7 @@
       certonly
       -d {{ item }}
       creates=/etc/letsencrypt/live/{{ item }}/fullchain.pem
-    loop: "{{ sites }}"
+    loop: "{{ sites + sites_local }}"
 
   - name: Enable site
     ansible.builtin.file:
@@ -280,7 +287,7 @@
       force: yes
       follow: no
       state: link
-    loop: "{{ sites }}"
+    loop: "{{ sites + sites_local }}"
     loop_control:
       loop_var: server_name
 
@@ -294,7 +301,7 @@
       error_log: /var/log/nginx/{{ server_name }}.err
       root: "{{ www_dir }}/{{ server_name }}/httpdocs"
       le: yes
-    loop: "{{ sites }}"
+    loop: "{{ sites + sites_local }}"
     loop_control:
       loop_var: server_name
     notify:

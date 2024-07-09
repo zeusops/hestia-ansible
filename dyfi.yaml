@@ -87,17 +87,23 @@
       dest: "/etc/systemd/system/dyfi-update@.service"
     notify:
     - Reload systemd
+
+  - name: Load local variables
+    ansible.builtin.include_vars:
+      file: vars/dyfi-local.yaml
+    when: "'vars/dyfi-local.yaml' is file"
+
   - name: Create configs
     ansible.builtin.template:
       src: files/dyfi/dyfi-update.conf.j2
       dest: "/etc/dyfi-update-{{ item.name }}.conf"
-    loop: "{{ dyfi_configs }}"
+    loop: "{{ dyfi_configs + dyfi_configs_local }}"
   - name: Start services
     ansible.builtin.systemd:
       state: started
       enabled: yes
       name: "dyfi-update@{{ item.name }}"
-    loop: "{{ dyfi_configs }}"
+    loop: "{{ dyfi_configs + dyfi_configs_local }}"
 
 
 
