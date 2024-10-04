@@ -1,0 +1,8 @@
+#!/bin/sh
+{{ ansible_managed | comment }}
+
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=774483
+export TERM=xterm
+byobu-tmux new -d -s satisfactory
+tmux rename-window -t satisfactory:0 server
+tmux send-keys -t satisfactory:server 'cd ~/server; ./FactoryServer.sh -Port=7778' ENTER

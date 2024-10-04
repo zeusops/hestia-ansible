@@ -1,0 +1,141 @@
+---
+- name: "Install steamcmd and Satisfactory"
+  become_user: "{{ user }}"
+  hosts: satisfactory
+
+  vars:
+    user: satisfactory
+    home: "/srv/{{ user }}"
+    server: "{{ home }}/server"
+    steam_dir: "{{ home }}/steamcmd"
+
+    ufw_apps:
+    - { file: satisfactory, app: "Satisfactory" }
+
+
+  tasks:
+  - name: Privileged tasks
+    become_user: root
+    become: yes
+    block:
+    - name: Create user
+      ansible.builtin.user:
+        name: "{{ user }}"
+        system: yes
+        home: "{{ home }}"
+        shell: /bin/bash
+    # UFW
+    # TODO: move into a role
+    - name: Install UFW apps
+      ansible.builtin.copy:
+        src: "files/ufw/applications.d/{{ item.file }}"
+        dest: "/etc/ufw/applications.d/{{ item.file }}"
+      loop: "{{ ufw_apps }}"
+    - name: Enable UFW rules
+      community.general.ufw:
+        rule: allow
+        name: "{{ item.app }}"
+      loop: "{{ ufw_apps }}"
+    - name: Install steamcmd
+      import_role:
+        name: lutangar.steamcmd
+      vars:
+        # FIXME: this doesn't actually override the variable as expected, had to
+        # truncate vars/Debian.yml in the role for this to apply
+        steamcmd_packages:
+        - lib32gcc-s1
+        steamcmd_create_user: no
+        steamcmd_user: "{{ user }}"
+        steamcmd_user_home: "{{ home }}/"
+        steamcmd_directory: "{{ steam_dir }}/"
+        steamcmd_steam:
+          username: anonymous
+
+    #- name: Install gpg
+    #  ansible.builtin.apt:
+    #    name: gpg
+    #    update_cache: yes
+    #- name: Install mono
+    #  block:
+    #  - name: Add mono key
+    #    ansible.builtin.get_url:
+    #      url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3fa7e0328081bff6a14da29aa6a19b38d3d831ef
+    #      dest: /usr/share/keyrings/mono-official-archive-keyring.asc
+    #      checksum: sha256:22df74b7583791f5e4f2233e4c9e9707fcf8dfeeb90ccea4f0a194b82b00890f
+    #  - name: Add mono repo
+    #    ansible.builtin.apt_repository:
+    #      repo: "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.asc] https://download.mono-project.com/repo/ubuntu stable-jessie main"
+    #      state: present
+    #  - name: Install mono
+    #    ansible.builtin.apt:
+    #      name: mono-devel
+    #      update_cache: yes
+
+  - name: Non-privileged tasks
+    become: yes
+    become_user: "{{ user }}"
+    block:
+    - name: Install Satisfactory server
+      ansible.builtin.command:
+        cmd: "{{ steam_dir }}/steamcmd.sh +force_install_dir {{ server }} +login anonymous +app_update 1690800 +quit"
+        creates: "{{ server }}/FactoryServer.sh"
+    - name: Add update script
+      ansible.builtin.template:
+        src: files/satisfactory/update-server.sh.j2
+        dest: "{{ home }}/update-server.sh"
+        mode: +x
+    - name: Add tmux script
+      ansible.builtin.template:
+        src: files/satisfactory/tmux_start.sh.j2
+        dest: "{{ home }}/tmux_start.sh"
+        mode: +x
+    - name: Create reboot tmux task
+      ansible.builtin.cron:
+        name: Start tmux on boot
+        special_time: reboot
+        user: "{{ user }}"
+        job: "SHELL=/usr/bin/bash $HOME/tmux_start.sh"
+        disabled: false
+    - name: cron | Stop server before ops
+      ansible.builtin.cron:
+        name: Stop server before ops
+        minute: 30
+        hour: 16
+        weekday: "5,6,7"
+        user: "{{ user }}"
+        job: "tmux send-keys -t satisfactory:server stop ENTER"
+        disabled: false
+    - name: cron | Start server after ops
+      ansible.builtin.cron:
+        name: Start server after ops
+        minute: 5
+        hour: 19
+        weekday: "5,6,7"
+        user: "{{ user }}"
+        job: "tmux send-keys -t satisfactory:server 'cd ~/server; ./FactoryServer.sh -Port=7778' ENTER"
+        disabled: false
+
+  #- name: Privileged tasks
+  #  block:
+  #  - name: Create systemd service
+  #    ansible.builtin.template:
+  #      src: files/arma/systemd.service.j2
+  #      dest: "/etc/systemd/system/{{ user }}.service"
+  #    vars:
+  #      bin: "{{ repodir }}/bin"
+  #      group: "{{ user }}"
+  #      workdir: "{{ server }}/base-installation"
+  #    notify:
+  #    - Reload systemd
+  #  - name: Enable systemd service
+  #    ansible.builtin.service:
+  #      #state: started
+  #      enabled: yes
+  #      name: "{{ user }}.service"
+
+  handlers:
+  - name: Reload systemd
+    become: yes
+    become_user: root
+    ansible.builtin.systemd:
+      daemon_reload: yes
