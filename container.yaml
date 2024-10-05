@@ -111,7 +111,7 @@
       timeout_start_sec: 1m
 
     - image_name: docker.io/gehock/arma-notifier
-      image_tag: 0.3.0
+      image_tag: v0.3.2
       service_name: arma-notifier
       description: Arma notifier
       volumes:
