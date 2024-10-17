@@ -145,6 +145,22 @@
     ansible.builtin.file:
       path: /usr/lib/x86_64-linux-gnu/udisks2/modules
       state: directory
+  - name: Dummy NetworkManager interface for Cockpit
+    # Cockpit/packagekit relies heavily on NetworkManager, refuses to download
+    # updates unless it can see an "online" interface
+    # https://cockpit-project.org/faq#error-message-about-being-offline
+    block:
+    - ansible.builtin.copy:
+        src: files/cockpit/nm-conf-10-globally-managed-devices.conf
+        dest: /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
+    - community.general.nmcli:
+        state: present
+        type: dummy
+        conn_name: fake
+        ifname: fake0
+        ip4: 1.2.3.4/24
+        gw4: 1.2.3.1
+
   - name: Postfix local transport
     block:
     - name: Bind postfix to local only
