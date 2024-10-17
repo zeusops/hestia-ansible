@@ -69,6 +69,7 @@
     # Without these the revproxy role will remove manually managed sites
     nginx_revproxy_remove_webroot_sites: no
     nginx_revproxy_de_activate_sites: no
+    nginx_revproxy_certbot_from_pip: yes
     zeusopscom_redirects:
     - [doc, "https://docs.google.com/document/d/1NKLi_VazqMgpnZYHa6FDOQbZyfqLDPosi4xdOQPgHMU/edit?usp=sharing"]
     - [rules, "https://docs.google.com/document/d/1DWK53LF3AjRqxZkb4qQXeBBvtSIOtamnUXyk2b6aaAs/edit?usp=sharing"]

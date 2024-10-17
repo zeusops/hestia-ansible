@@ -1,4 +1,5 @@
 - src: lutangar.steamcmd
-- src: hispanico.nginx_revproxy
+- src: https://github.com/Gehock/ansible-nginx-revproxy
+  name: hispanico.nginx_revproxy
 - src: https://github.com/Gehock/ansible-role-podman
   name: chasinglogic.podman
