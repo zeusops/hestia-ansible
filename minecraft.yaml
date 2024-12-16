@@ -38,6 +38,7 @@
       special_time: reboot
       user: "{{ service_name }}"
       job: SHELL=/bin/bash $HOME/tmux_start.sh
+      state: absent
   - name: Create server directory
     ansible.builtin.file:
       path: "{{ server_dir }}"
