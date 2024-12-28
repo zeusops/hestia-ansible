@@ -169,6 +169,27 @@
       - "19999:19999/udp"  # RCON
       network: host
 
+    - image_name: ghcr.io/gehock/arma-reforger
+      image_tag: latest
+      service_name: reforger-download
+      description: Arma Reforger (download updates and mods)
+      volumes:
+      # TODO: make dynamic based on a dictionary in vars
+      #- /opt/reforger/configs:/reforger/Configs
+      - /opt/reforger/profile:/home/profile
+      - /opt/reforger/installation:/reforger
+      env_vars:
+      - "SKIP_INSTALL=false"
+      - "ARMA_CONFIG=config.json"
+      publish:
+      - "2001:2001/udp"
+      - "17777:17777/udp"
+      - "19999:19999/udp"  # RCON
+      network: host
+      state: stopped
+      enabled: false
+      restart: "no"
+
 
     # Don't run `apt upgrade` every time something changes
     podman_upgrade_system: no
