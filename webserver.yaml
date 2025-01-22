@@ -20,6 +20,10 @@
     - gehock.com
     - gehock.fi
 
+    git_sites:
+    - { domain: www.zeusops.com, repo: https://github.com/zeusops/zeusops.com.git, version: HEAD }
+    - { domain: dev.zeusops.com, repo: https://github.com/zeusops/zeusops.com.git, version: test }
+
     nginx_revproxy_sites:
       #default:
       #  ssl: false
@@ -131,89 +135,91 @@
       name: Nginx Full
 
   # === Webhook ===
-  - name: Create user
-    ansible.builtin.user:
-      name: "{{ webhook.user }}"
-      system: yes
-      home: "{{ homedir }}/{{ webhook.user }}"
-  - name: Create SSH directory
-    become: yes
-    become_user: "{{ webhook.user }}"
-    ansible.builtin.file:
-      path: "{{ homedir }}/{{ webhook.user }}/.ssh"
-      state: directory
-  - name: Install SSH dependency
-    ansible.builtin.pip:
-      name: stormssh
-  - name: Generate SSH deploy key
-    become: yes
-    become_user: "{{ webhook.user }}"
-    community.crypto.openssh_keypair:
-      type: ed25519
-      path: "{{ homedir }}/{{ webhook.user }}/.ssh/{{ webhook.name }}_deploy_key"
-      comment: "{{ webhook.user }}@{{ ansible_hostname }}#{{ webhook.name }}"
-    # TODO: make sshkey parser support a single item below
-    loop: [1]
-    register: sshkey
-  - name: Print key
-    when: sshkey.changed
-    # TODO: format this in a more beautiful way
-    debug:
-      #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
-      msg: "SSH key: {{ item }}"
-    loop: "{{ sshkey | json_query('results[*].[public_key, comment]') | json_query(\"[*].join(' ', @)\")  }}"
-    loop_control:
-      label: 'key'
-  - name: Prompt to add deploy key
-    when: sshkey.changed
-    ansible.builtin.pause:
-      prompt: "add the above keys to GitHub before continuing"
+  - name: Webhook setup
+    block:
+    - name: Create user
+      ansible.builtin.user:
+        name: "{{ webhook.user }}"
+        system: yes
+        home: "{{ homedir }}/{{ webhook.user }}"
+    - name: Create SSH directory
+      become: yes
+      become_user: "{{ webhook.user }}"
+      ansible.builtin.file:
+        path: "{{ homedir }}/{{ webhook.user }}/.ssh"
+        state: directory
+    - name: Install SSH dependency
+      ansible.builtin.pip:
+        name: stormssh
+    - name: Generate SSH deploy key
+      become: yes
+      become_user: "{{ webhook.user }}"
+      community.crypto.openssh_keypair:
+        type: ed25519
+        path: "{{ homedir }}/{{ webhook.user }}/.ssh/{{ webhook.name }}_deploy_key"
+        comment: "{{ webhook.user }}@{{ ansible_hostname }}#{{ webhook.name }}"
+      # TODO: make sshkey parser support a single item below
+      loop: [1]
+      register: sshkey
+    - name: Print key
+      when: sshkey.changed
+      # TODO: format this in a more beautiful way
+      debug:
+        #msg: "{{ sshkey | json_query('results[*].[public_key, comment]') }}"
+        msg: "SSH key: {{ item }}"
+      loop: "{{ sshkey | json_query('results[*].[public_key, comment]') | json_query(\"[*].join(' ', @)\")  }}"
+      loop_control:
+        label: 'key'
+    - name: Prompt to add deploy key
+      when: sshkey.changed
+      ansible.builtin.pause:
+        prompt: "add the above keys to GitHub before continuing"
 
-  - name: Create SSH config
-    become: yes
-    become_user: "{{ webhook.user }}"
-    community.general.ssh_config:
-      user: "{{ webhook.user }}"
-      host: "github.com-{{ webhook.name }}"
-      hostname: github.com
-      identity_file: "{{ homedir }}/{{ webhook.user }}/.ssh/{{ webhook.name }}_deploy_key"
+    - name: Create SSH config
+      become: yes
+      become_user: "{{ webhook.user }}"
+      community.general.ssh_config:
+        user: "{{ webhook.user }}"
+        host: "github.com-{{ webhook.name }}"
+        hostname: github.com
+        identity_file: "{{ homedir }}/{{ webhook.user }}/.ssh/{{ webhook.name }}_deploy_key"
 
-  - name: Clone repo
-    become: yes
-    become_user: "{{ webhook.user }}"
-    ansible.builtin.git:
-      repo: "git@github.com-{{ webhook.name }}:{{ webhook.gh_user | d('zeusops') }}/{{ webhook.name }}.git"
-      dest: "{{ webhook.dest }}"
-      accept_newhostkey: yes
-      # Submodules are cloned manually because we want to set the SSH remote
-      # address instead of HTTPS
-      #recursive: no
+    - name: Clone repo
+      become: yes
+      become_user: "{{ webhook.user }}"
+      ansible.builtin.git:
+        repo: "git@github.com-{{ webhook.name }}:{{ webhook.gh_user | d('zeusops') }}/{{ webhook.name }}.git"
+        dest: "{{ webhook.dest }}"
+        accept_newhostkey: yes
+        # Submodules are cloned manually because we want to set the SSH remote
+        # address instead of HTTPS
+        #recursive: no
 
-  - name: Check if unit file exists
-    ansible.builtin.stat:
-      path: "/etc/systemd/system/{{ webhook.user }}.service"
-    register: service
-  - name: Fetch template
-    run_once: yes
-    ansible.builtin.fetch:
-      src: "{{ webhook.dest }}/systemd/webhook.service.j2"
-      dest: /tmp/webhook.service.j2
-      flat: yes
-    when: not service.stat.exists
-  - name: Create systemd service
-    ansible.builtin.template:
-      src: /tmp/webhook.service.j2
-      dest: "/etc/systemd/system/{{ webhook.user }}.service"
-    vars:
-      dir: "{{ webhook.dest }}"
-    notify:
-    - Reload systemd
-    when: not service.stat.exists
-  - name: Run webhook
-    ansible.builtin.systemd:
-      state: started
-      enabled: yes
-      name: "{{ webhook.user }}"
+    - name: Check if unit file exists
+      ansible.builtin.stat:
+        path: "/etc/systemd/system/{{ webhook.user }}.service"
+      register: service
+    - name: Fetch template
+      run_once: yes
+      ansible.builtin.fetch:
+        src: "{{ webhook.dest }}/systemd/webhook.service.j2"
+        dest: /tmp/webhook.service.j2
+        flat: yes
+      when: not service.stat.exists
+    - name: Create systemd service
+      ansible.builtin.template:
+        src: /tmp/webhook.service.j2
+        dest: "/etc/systemd/system/{{ webhook.user }}.service"
+      vars:
+        dir: "{{ webhook.dest }}"
+      notify:
+      - Reload systemd
+      when: not service.stat.exists
+    - name: Run webhook
+      ansible.builtin.systemd:
+        state: started
+        enabled: yes
+        name: "{{ webhook.user }}"
 
   # === Setup nginx ===
 
@@ -222,7 +228,7 @@
       path: /etc/nginx/sites-enabled/default
       state: absent
 
-  - name: Copy config
+  - name: Copy nginx config
     ansible.builtin.template:
       src: files/nginx/nginx.conf.j2
       dest: /etc/nginx/nginx.conf
@@ -233,33 +239,38 @@
     - Reload nginx
 
   # === zeusops.com ===
+  - name: Set up sites from git
+    block:
+    - name: Clone site repo
+      ansible.builtin.git:
+        repo: "{{ item.repo }}"
+        dest: "{{ www_dir }}/{{ item.domain }}"
+        version: "{{ item.version }}"
+        accept_newhostkey: yes
+      loop: "{{ git_sites }}"
 
-  - name: Clone zeusops.com repo
-    ansible.builtin.git:
-      repo: "https://github.com/zeusops/zeusops.com.git"
-      dest: "{{ www_dir }}/www.zeusops.com"
-      accept_newhostkey: yes
+    - name: Enable site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/{{ item.domain }}.conf
+        dest: /etc/nginx/sites-enabled/{{ item.domain }}.conf
+        force: yes
+        follow: no
+        state: link
+      loop: "{{ git_sites }}"
 
-  - name: Enable zeusops.com
-    ansible.builtin.file:
-      src: /etc/nginx/sites-available/www.zeusops.com.conf
-      dest: /etc/nginx/sites-enabled/www.zeusops.com.conf
-      force: yes
-      follow: no
-      state: link
-
-  - name: Copy zeusops.com config
-    ansible.builtin.template:
-      src: files/nginx/site.conf.j2
-      dest: /etc/nginx/sites-available/{{ server_name }}.conf
-    vars:
-      server_name: www.zeusops.com
-      access_log: /var/log/nginx/{{ server_name }}.log
-      error_log: /var/log/nginx/{{ server_name }}.err
-      root: "{{ www_dir }}/{{ server_name }}/public"
-      redirects: "{{ zeusopscom_redirects }}"
-    notify:
-    - Reload nginx
+    - name: Copy site config
+      ansible.builtin.template:
+        src: files/nginx/site.conf.j2
+        dest: /etc/nginx/sites-available/{{ server_name }}.conf
+      vars:
+        server_name: "{{ item.domain }}"
+        access_log: /var/log/nginx/{{ server_name }}.log
+        error_log: /var/log/nginx/{{ server_name }}.err
+        root: "{{ www_dir }}/{{ server_name }}/public"
+        redirects: "{{ zeusopscom_redirects }}"
+      loop: "{{ git_sites }}"
+      notify:
+      - Reload nginx
 
   # === gehock.dy.fi ===
 
