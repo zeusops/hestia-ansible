@@ -5,7 +5,7 @@
   vars:
     service_name: minecraft
     home: "/srv/{{ service_name }}"
-    server_name: 2024-03-17-miller
+    server_name: 2025-01-31-fabric
     server_dir: "{{ home }}/{{ server_name }}"
     mc_version: 1.20.2
     forge_version: 40.1.68
@@ -27,6 +27,7 @@
     ansible.builtin.apt:
       name:
         - openjdk-18-jre-headless
+        - openjdk-21-jre-headless
   - name: Add tmux script
     ansible.builtin.template:
       src: files/minecraft/tmux_start.sh.j2
