@@ -76,6 +76,7 @@
     nginx_revproxy_certbot_from_pip: yes
     zeusopscom_redirects:
     - [doc, "https://docs.google.com/document/d/1NKLi_VazqMgpnZYHa6FDOQbZyfqLDPosi4xdOQPgHMU/edit?usp=sharing"]
+    - [meeting, "https://docs.google.com/document/d/1Xs4YG8eZ3XTc-lpm8ePSwKNKBgyj_3mM4swr5BNuDmE/edit?tab=t.0#heading=h.qgoz7pdun6ly"]
     - [rules, "https://docs.google.com/document/d/1DWK53LF3AjRqxZkb4qQXeBBvtSIOtamnUXyk2b6aaAs/edit?usp=sharing"]
     - [zeus, "https://docs.google.com/document/d/1PFK__UcgmAJ1P3xBnJxeW2ow7u8bgEfM8lkpHJrLYDU/edit?usp=sharing"]
     - [template, "https://github.com/zeusops/mission-templates"]
