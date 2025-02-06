@@ -120,6 +120,9 @@
         wanted_by:
         - network.target
       timeout_start_sec: 1m
+      state: stopped
+      enabled: false
+      restart: "no"
 
     - image_name: docker.io/gehock/operationbot
       image_tag: v0.50.1
