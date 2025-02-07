@@ -174,8 +174,8 @@
 
     - image_name: ghcr.io/gehock/arma-reforger
       image_tag: latest
-      service_name: reforger-download
-      description: Arma Reforger (download updates and mods)
+      service_name: reforger-update-server
+      description: Arma Reforger (download server update)
       volumes:
       # TODO: make dynamic based on a dictionary in vars
       #- /opt/reforger/configs:/reforger/Configs
