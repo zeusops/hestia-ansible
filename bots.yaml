@@ -96,7 +96,7 @@
       requirements: "/srv/{{ item.name }}/{{ item.name }}/requirements.txt"
       virtualenv: "/srv/{{ item.name }}/venv"
     loop: "{{ bots }}"
-    when: item.install_deps | d(false)
+    when: item.install_deps | d(true)
     register: bot_services
     notify: Restart bot services
   - name: Create bot configs
@@ -119,7 +119,7 @@
       description: "{{ item.description }}"
       module: "{{ item.module }}"
     loop: "{{ bots }}"
-    when: item.create_svc | d(false)
+    when: item.create_svc | d(true)
     notify:
     - Reload systemd
   - name: Zeusopsbot dependencies
@@ -144,7 +144,7 @@
       enabled: yes
       name: "{{ item.name }}"
     loop: "{{ bots }}"
-    when: item.create_svc | d(false)
+    when: item.create_svc | d(true)
 
   - name: Install extractpbo dependencies
     ansible.builtin.apt:
