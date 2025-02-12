@@ -95,7 +95,7 @@
         special_time: reboot
         user: "{{ user }}"
         job: "SHELL=/usr/bin/bash $HOME/tmux_start.sh"
-        disabled: false
+        disabled: true
     - name: cron | Stop server before ops
       ansible.builtin.cron:
         name: Stop server before ops
@@ -104,7 +104,7 @@
         weekday: "5,6,7"
         user: "{{ user }}"
         job: "tmux send-keys -t satisfactory:server stop ENTER"
-        disabled: false
+        disabled: true
     - name: cron | Start server after ops
       ansible.builtin.cron:
         name: Start server after ops
@@ -113,7 +113,7 @@
         weekday: "5,6,7"
         user: "{{ user }}"
         job: "tmux send-keys -t satisfactory:server 'cd ~/server; ./FactoryServer.sh -Port=7778' ENTER"
-        disabled: false
+        disabled: true
 
   #- name: Privileged tasks
   #  block:
