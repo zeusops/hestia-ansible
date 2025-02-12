@@ -122,22 +122,6 @@
     when: item.create_svc | d(true)
     notify:
     - Reload systemd
-  - name: Zeusopsbot dependencies
-    block:
-    - name: Clone zeusopsbot dependencies
-      become: yes
-      become_user: zeusopsbot
-      ansible.builtin.git:
-        repo: "https://github.com/Gehock/python-HackMD.git"
-        dest: "/srv/zeusopsbot/zeusopsbot/python-HackMD"
-        update: yes
-    - name: Install zeusopsbot dependencies
-      become: yes
-      become_user: zeusopsbot
-      command: /srv/zeusopsbot/venv/bin/pip install -e .
-      args:
-        chdir: /srv/zeusopsbot/zeusopsbot/python-HackMD
-        creates: /srv/zeusopsbot/venv/lib/python3.10/site-packages/python-HackMD.egg-link
   - name: Run bots
     ansible.builtin.service:
       state: started
