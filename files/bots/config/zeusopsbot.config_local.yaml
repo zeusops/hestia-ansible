@@ -1,8 +1,0 @@
-bot:
-  token: "{{ tokens.zeusopsbot }}"
-cogs:
-  meetingnotes:
-    hackmd:
-      token: "{{ tokens.hackmd }}"
-    github_gist:
-      token: "{{ tokens.github }}"

@@ -1,0 +1,8 @@
+bot:
+  token: "{{ secrets.discord }}"
+cogs:
+  meetingnotes:
+    hackmd:
+      token: "{{ secrets.hackmd }}"
+    github_gist:
+      token: "{{ secrets.github }}"
