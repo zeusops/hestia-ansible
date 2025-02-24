@@ -244,7 +244,7 @@
         cron_file: shut-down-antistasi
         minute: "30"
         hour: 18
-        weekday: "5,6,7"
+        weekday: "6,7"
         user: root
         job: "systemctl stop arma@antistasi"
         disabled: true
@@ -254,7 +254,7 @@
         cron_file: start-up-antistasi
         minute: "15"
         hour: 21
-        weekday: "5,6,7"
+        weekday: "6,7"
         user: root
         job: "systemctl start arma@antistasi"
         disabled: true
@@ -265,7 +265,7 @@
         cron_file: shut-down-sideop
         minute: "30"
         hour: 18
-        weekday: "5,6,7"
+        weekday: "6,7"
         user: root
         job: "systemctl stop arma@sideop"
     - name: Start up sideop after ops
@@ -274,7 +274,7 @@
         cron_file: start-up-sideop
         minute: "15"
         hour: 21
-        weekday: "5,6,7"
+        weekday: "6,7"
         user: root
         job: "systemctl start arma@sideop"
         disabled: true

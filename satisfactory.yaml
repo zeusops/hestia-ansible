@@ -101,7 +101,7 @@
         name: Stop server before ops
         minute: 30
         hour: 16
-        weekday: "5,6,7"
+        weekday: "6,7"
         user: "{{ user }}"
         job: "tmux send-keys -t satisfactory:server stop ENTER"
         disabled: true
@@ -110,7 +110,7 @@
         name: Start server after ops
         minute: 5
         hour: 19
-        weekday: "5,6,7"
+        weekday: "6,7"
         user: "{{ user }}"
         job: "tmux send-keys -t satisfactory:server 'cd ~/server; ./FactoryServer.sh -Port=7778' ENTER"
         disabled: true
