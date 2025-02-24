@@ -227,6 +227,7 @@
         minute: "*/15"
         user: "{{ user }}"
         job: "{{ repodir }}/bin/update-mods.sh main --check-only --notify --no-mail > /dev/null"
+        disabled: true
 
     - name: Create cronjob to check optional mod updates
       ansible.builtin.cron:
@@ -235,6 +236,7 @@
         minute: "*/15+5"
         user: "{{ user }}"
         job: "{{ repodir }}/bin/update-mods.sh optional --check-only --notify --no-mail 2>&1 > /dev/null | grep -v 2479229680"
+        disabled: true
 
     - name: Shut down antistasi before ops
       ansible.builtin.cron:
