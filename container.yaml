@@ -154,7 +154,7 @@
         - network.target
       timeout_start_sec: 1m
 
-    - image_name: ghcr.io/gehock/arma-reforger
+    - image_name: ghcr.io/zeusops/arma-reforger
       image_tag: latest
       service_name: reforger
       description: Arma Reforger
@@ -172,7 +172,7 @@
       - "19999:19999/udp"  # RCON
       network: host
 
-    - image_name: ghcr.io/gehock/arma-reforger
+    - image_name: ghcr.io/zeusops/arma-reforger
       image_tag: latest
       service_name: reforger-nobackend
       description: Arma Reforger (no backend)
@@ -194,7 +194,7 @@
       enabled: false
       restart: "no"
 
-    - image_name: ghcr.io/gehock/arma-reforger
+    - image_name: ghcr.io/zeusops/arma-reforger
       image_tag: latest
       service_name: reforger-update-server
       description: Arma Reforger (download server update)
