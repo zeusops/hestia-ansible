@@ -60,9 +60,9 @@
         3465386339323738340a616233363335323030366561383336383132386435316437393439343133
         38386539653865333331633633343763343164623838303363333031613963363762
       game_password: zeusops
-      port: 2001
-      rcon_port: 19999
-      a2s_port: 17777
+      port: 3001
+      rcon_port: 39999
+      a2s_port: 37777
     secrets:
       ocap: !vault |
         $ANSIBLE_VAULT;1.1;AES256
@@ -166,10 +166,10 @@
       env_vars:
       - "SKIP_INSTALL=true"
       - "ARMA_CONFIG=config.json"
-      publish:
-      - "2001:2001/udp"
-      - "17777:17777/udp"
-      - "19999:19999/udp"  # RCON
+      #publish:
+      #- "{{ reforger.port }}:{{ reforger.port }}/udp"
+      #- "{{ reforger.a2s_port }}:{{ reforger.a2s_port }}/udp"
+      #- "{{ reforger.rcon_port }}:{{ reforger.rcon_port }}/udp"  # RCON
       network: host
 
     - image_name: ghcr.io/zeusops/arma-reforger
@@ -185,10 +185,10 @@
       - "SKIP_INSTALL=true"
       - "ARMA_CONFIG=config.json"
       - "ARMA_PARAMS=\"-adminPassword salasana -addons 6324F7124A9768FB -server worlds/NoBackendScenarioLoader.ent -scenarioId {ECC61978EDCC2B5A}Missions/23_Campaign.conf -bindIP 0.0.0.0 -bindPort 2001 -maxFPS 60 -logLevel normal -logStats 60000\""
-      publish:
-      - "2001:2001/udp"
-      - "17777:17777/udp"
-      - "19999:19999/udp"  # RCON
+      #publish:
+      #- "{{ reforger.port }}:{{ reforger.port }}/udp"
+      #- "{{ reforger.a2s_port }}:{{ reforger.a2s_port }}/udp"
+      #- "{{ reforger.rcon_port }}:{{ reforger.rcon_port }}/udp"  # RCON
       network: host
       state: stopped
       enabled: false
@@ -206,10 +206,10 @@
       env_vars:
       - "SKIP_INSTALL=false"
       - "ARMA_CONFIG=config.json"
-      publish:
-      - "2001:2001/udp"
-      - "17777:17777/udp"
-      - "19999:19999/udp"  # RCON
+      #publish:
+      #- "{{ reforger.port }}:{{ reforger.port }}/udp"
+      #- "{{ reforger.a2s_port }}:{{ reforger.a2s_port }}/udp"
+      #- "{{ reforger.rcon_port }}:{{ reforger.rcon_port }}/udp"  # RCON
       network: host
       state: stopped
       enabled: false
