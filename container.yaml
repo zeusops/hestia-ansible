@@ -172,27 +172,27 @@
       #- "{{ reforger.rcon_port }}:{{ reforger.rcon_port }}/udp"  # RCON
       network: host
 
-    - image_name: ghcr.io/zeusops/arma-reforger
-      image_tag: latest
-      service_name: reforger-nobackend
-      description: Arma Reforger (no backend)
-      volumes:
-      # TODO: make dynamic based on a dictionary in vars
-      #- /opt/reforger/configs:/reforger/Configs
-      - /opt/reforger/profile:/home/profile
-      - /opt/reforger/installation:/reforger
-      env_vars:
-      - "SKIP_INSTALL=true"
-      - "ARMA_CONFIG=config.json"
-      - "ARMA_PARAMS=\"-adminPassword salasana -addons 6324F7124A9768FB -server worlds/NoBackendScenarioLoader.ent -scenarioId {ECC61978EDCC2B5A}Missions/23_Campaign.conf -bindIP 0.0.0.0 -bindPort 2001 -maxFPS 60 -logLevel normal -logStats 60000\""
-      #publish:
-      #- "{{ reforger.port }}:{{ reforger.port }}/udp"
-      #- "{{ reforger.a2s_port }}:{{ reforger.a2s_port }}/udp"
-      #- "{{ reforger.rcon_port }}:{{ reforger.rcon_port }}/udp"  # RCON
-      network: host
-      state: stopped
-      enabled: false
-      restart: "no"
+    #- image_name: ghcr.io/zeusops/arma-reforger
+    #  image_tag: latest
+    #  service_name: reforger-nobackend
+    #  description: Arma Reforger (no backend)
+    #  volumes:
+    #  # TODO: make dynamic based on a dictionary in vars
+    #  #- /opt/reforger/configs:/reforger/Configs
+    #  - /opt/reforger/profile:/home/profile
+    #  - /opt/reforger/installation:/reforger
+    #  env_vars:
+    #  - "SKIP_INSTALL=true"
+    #  - "ARMA_CONFIG=config.json"
+    #  - "ARMA_PARAMS=\"-adminPassword salasana -addons 6324F7124A9768FB -server worlds/NoBackendScenarioLoader.ent -scenarioId {ECC61978EDCC2B5A}Missions/23_Campaign.conf -bindIP 0.0.0.0 -bindPort 2001 -maxFPS 60 -logLevel normal -logStats 60000\""
+    #  #publish:
+    #  #- "{{ reforger.port }}:{{ reforger.port }}/udp"
+    #  #- "{{ reforger.a2s_port }}:{{ reforger.a2s_port }}/udp"
+    #  #- "{{ reforger.rcon_port }}:{{ reforger.rcon_port }}/udp"  # RCON
+    #  network: host
+    #  state: stopped
+    #  enabled: false
+    #  restart: "no"
 
     - image_name: ghcr.io/zeusops/arma-reforger
       image_tag: latest
