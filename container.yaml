@@ -81,6 +81,7 @@
         31663065613361323665346139343964393963646265383032333839653535323963663730643465
         38326433656662323265353263633830313435326439623135623839393036353233303862633362
         61376632303765316633
+      zeusops-bot: deadbeef
     podman_services:
     - image_name: n1try/wakapi
       description: Wakapi server
@@ -215,6 +216,21 @@
       enabled: false
       restart: "no"
 
+    - image_name: ghcr.io/zeusops/zeusops-bot
+      image_tag: latest
+      service_name: zeusops-bot
+      description: Zeusops Bot
+      volumes:
+      - /opt/reforger/installation/Configs:/data/config
+      - /opt/reforger/reference_config.json:/data/reference_config.json:ro
+      env_vars:
+      - "BOT_REFORGER_REFERENCE_CONFIG=/data/reference_config.json"
+      - "BOT_REFORGER_CONFIG_FOLDER=/data/config"
+      - "BOT_DISCORD_TOKEN={{ secrets['zeusops-bot'] }}"
+      install:
+        wanted_by:
+        - network.target
+      timeout_start_sec: 1m
 
     # Don't run `apt upgrade` every time something changes
     podman_upgrade_system: no
