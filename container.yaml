@@ -235,7 +235,7 @@
       env_vars:
       - "BOT_REFORGER_REFERENCE_CONFIG=/data/reference_config.json"
       - "BOT_REFORGER_CONFIG_FOLDER=/data/config"
-      - "BOT_DISCORD_TOKEN={{ secrets['zeusops-bot'] }}"
+      - "BOT_DISCORD_TOKEN={{ secrets['zeusops-bot'] | trim }}"
       install:
         wanted_by:
         - network.target
