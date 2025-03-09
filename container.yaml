@@ -175,7 +175,7 @@
       - /opt/reforger/installation:/reforger
       env_vars:
       - "SKIP_INSTALL=true"
-      - "ARMA_CONFIG=config.json"
+      - "ARMA_CONFIG=current-config.json"
       #publish:
       #- "{{ reforger.port }}:{{ reforger.port }}/udp"
       #- "{{ reforger.a2s_port }}:{{ reforger.a2s_port }}/udp"
