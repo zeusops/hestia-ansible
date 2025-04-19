@@ -29,6 +29,10 @@ server {
     {% endfor -%}
   {% endif %}
 
+  {% if extra_site_config is defined -%}
+  {{ extra_site_config }}
+  {% endif %}
+
   {%- if le is defined and le -%}
 
   ssl_certificate /etc/letsencrypt/live/{{ server_name }}/fullchain.pem;

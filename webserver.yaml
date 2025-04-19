@@ -74,6 +74,10 @@
     nginx_revproxy_remove_webroot_sites: no
     nginx_revproxy_de_activate_sites: no
     nginx_revproxy_certbot_from_pip: yes
+    zeusopscom_extra_site_config: |
+      location /files/logs/ {
+        autoindex on;
+      }
     zeusopscom_redirects:
     - [doc, "https://docs.google.com/document/d/1NKLi_VazqMgpnZYHa6FDOQbZyfqLDPosi4xdOQPgHMU/edit?usp=sharing"]
     - [meeting, "https://docs.google.com/document/d/1Xs4YG8eZ3XTc-lpm8ePSwKNKBgyj_3mM4swr5BNuDmE/edit?tab=t.0#heading=h.qgoz7pdun6ly"]
@@ -271,6 +275,7 @@
         error_log: /var/log/nginx/{{ server_name }}.err
         root: "{{ www_dir }}/{{ server_name }}/public"
         redirects: "{{ zeusopscom_redirects }}"
+        extra_site_config: "{{ zeusopscom_extra_site_config }}"
       loop: "{{ git_sites }}"
       notify:
       - Reload nginx
