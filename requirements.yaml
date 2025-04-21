@@ -3,3 +3,4 @@
   name: hispanico.nginx_revproxy
 - src: https://github.com/Gehock/ansible-role-podman
   name: chasinglogic.podman
+- src: https://github.com/Gehock/ansible-role-opentofu

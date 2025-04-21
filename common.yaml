@@ -2,6 +2,9 @@
 - name: Common setup
   hosts: all
 
+  roles:
+    - role: ansible-role-opentofu
+
   vars:
     ssh_users:
     - sami
