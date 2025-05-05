@@ -124,7 +124,7 @@
       rule: allow
       name: mosh
   - name: Start fail2ban
-    ansible.builtin.systemd:
+    ansible.builtin.systemd_service:
       state: started
       enabled: yes
       name: fail2ban
@@ -135,9 +135,9 @@
     # https://github.com/fwupd/fwupd/issues/3037
     # https://github.com/fwupd/fwupd/commit/0c9ac226c976836b89e8a3736145f162f43f4691
     # https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1969976
-    ansible.builtin.systemd:
+    ansible.builtin.systemd_service:
       name: "{{ item }}"
-      state: started
+      enabled: true
       masked: no
     loop:
     - fwupd-refresh.service
