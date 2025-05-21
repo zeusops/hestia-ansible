@@ -226,7 +226,7 @@
       restart: "no"
 
     - image_name: ghcr.io/zeusops/zeusops-bot
-      image_tag: latest
+      image_tag: dev-pr-28
       service_name: zeusops-bot
       description: Zeusops Bot
       volumes:
