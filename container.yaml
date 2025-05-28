@@ -222,7 +222,7 @@
       - /opt/reforger/installation:/reforger
       env_vars:
       - "SKIP_INSTALL=false"
-      - "ARMA_CONFIG=config.json"
+      - "ARMA_CONFIG=current-config.json"
       #publish:
       #- "{{ reforger.port }}:{{ reforger.port }}/udp"
       #- "{{ reforger.a2s_port }}:{{ reforger.a2s_port }}/udp"
@@ -240,7 +240,7 @@
       - /opt/reforger/installation/Configs:/data/config
       # - /opt/reforger/reference_config.json:/data/reference_config.json:ro
       env_vars:
-      - "BOT_REFORGER_REFERENCE_CONFIG=/data/config/current-config.json"
+      - "BOT_REFORGER_REFERENCE_CONFIG=/data/config/config.json"
       - "BOT_REFORGER_CONFIG_FOLDER=/data/config"
       - "BOT_DISCORD_TOKEN={{ secrets['zeusops-bot'] | trim }}"
       install:
