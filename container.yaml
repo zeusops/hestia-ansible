@@ -142,7 +142,7 @@
       restart: "no"
 
     - image_name: docker.io/gehock/operationbot
-      image_tag: v0.52.0
+      image_tag: v0.53.0
       service_name: operationbot
       description: Operation Bot
       volumes:
