@@ -40,6 +40,8 @@
       src: files/containers/reforger-config.json.j2
       dest: "/opt/reforger/installation/Configs/config.json"
       mode: "0400"
+    tags:
+    - reforger-config
 
   roles:
   - chasinglogic.podman
