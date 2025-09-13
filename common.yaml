@@ -67,7 +67,7 @@
         - cockpit
         - cockpit-podman
         # store past metrics
-        - cockpit-pcp
+        - cockpit-bridge
         - cockpit-machines
         - cockpit-navigator
         # certificate generator for cockpit
