@@ -97,6 +97,7 @@
     ansible.builtin.template:
       src: files/dyfi/dyfi-update.conf.j2
       dest: "/etc/dyfi-update-{{ item.name }}.conf"
+      mode: '0600'
     loop: "{{ dyfi_configs + dyfi_configs_local }}"
   - name: Start services
     ansible.builtin.systemd:
