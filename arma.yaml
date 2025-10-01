@@ -307,7 +307,7 @@
     - name: Enable Arma service
       ansible.builtin.service:
         #state: started
-        enabled: yes
+        enabled: false
         name: "{{ user }}@main.service"
     - name: Create cronjob to start HCs
       ansible.builtin.cron:
