@@ -141,11 +141,13 @@
       src: "files/ufw/applications.d/{{ item.file }}"
       dest: "/etc/ufw/applications.d/{{ item.file }}"
     loop: "{{ ufw_apps }}"
+    tags: fw
   - name: Enable UFW rules
     community.general.ufw:
       rule: allow
       name: "{{ item.app }}"
     loop: "{{ ufw_apps }}"
+    tags: fw
 
   handlers:
   - name: Reload systemd
