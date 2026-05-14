@@ -21,8 +21,8 @@
     - gehock.fi
 
     git_sites:
-    - { domain: www.zeusops.com, repo: https://github.com/zeusops/zeusops.com.git, version: HEAD }
-    - { domain: dev.zeusops.com, repo: https://github.com/zeusops/zeusops.com.git, version: test }
+    - { domain: www.zeusops.com, repo: https://github.com/zeusops/zeusops.com.git, version: HEAD, le: true }
+    - { domain: dev.zeusops.com, repo: https://github.com/zeusops/zeusops.com.git, version: test, le: true }
 
     nginx_revproxy_sites:
       #default:
@@ -124,6 +124,7 @@
       64616162363362323133613364363738626136393734383461356138393930663364373838633763
       6565346233303634663866626564316262323061363839366263
     wildcard_site_domain: zeusops.com
+    use_wildcard_domain: false
 
 
   tasks:
@@ -235,13 +236,25 @@
       path: /etc/nginx/sites-enabled/default
       state: absent
 
-  - name: Copy nginx config
+  - name: Copy nginx config (wildcard)
     ansible.builtin.template:
       src: files/nginx/nginx.conf.j2
       dest: /etc/nginx/nginx.conf
     vars:
       ssl_certificate: /etc/letsencrypt/live/{{ wildcard_site_domain }}/fullchain.pem
       ssl_certificate_key: /etc/letsencrypt/live/{{ wildcard_site_domain }}/privkey.pem
+    when: use_wildcard_domain
+    notify:
+    - Reload nginx
+
+  - name: Copy nginx config (no wildcard)
+    ansible.builtin.template:
+      src: files/nginx/nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+    vars:
+      ssl_certificate: /etc/ssl/certs/ssl-cert-snakeoil.pem
+      ssl_certificate_key: /etc/ssl/private/ssl-cert-snakeoil.key
+    when: not use_wildcard_domain
     notify:
     - Reload nginx
 
@@ -276,6 +289,9 @@
         root: "{{ www_dir }}/{{ server_name }}/public"
         redirects: "{{ zeusopscom_redirects }}"
         extra_site_config: "{{ zeusopscom_extra_site_config }}"
+        # TODO: doesn't currently request the actual certificate, needs to be
+        # requested manually
+        le: "{[ item.le | default(false) }}"
       loop: "{{ git_sites }}"
       notify:
       - Reload nginx
@@ -383,12 +399,14 @@
     loop:
     - certbot-hetzner-auth.sh
     - certbot-hetzner-cleanup.sh
+    when: use_wildcard_domain
 
   - name: Create hetzner DNS token file
     ansible.builtin.copy:
       dest: /etc/hetzner-dns-token
       content: "{{ hetzner_dns_token }}"
       mode: '0600'
+    when: use_wildcard_domain
 
   - name: Get wildcard certificate using certbot
     ansible.builtin.command: |
@@ -399,6 +417,7 @@
       --manual-cleanup-hook /usr/libexec/certbot-hetzner-cleanup.sh
       -d {{ wildcard_site_domain }} -d *.{{ wildcard_site_domain }}
       creates=/etc/letsencrypt/live/{{ wildcard_site_domain }}/fullchain.pem
+    when: use_wildcard_domain
 
   # ====== handlers ======
   handlers:

@@ -21,6 +21,11 @@ server {
   access_log /var/log/nginx/{{ server_name }}_access.log;
   error_log /var/log/nginx/{{ server_name }}_error.log;
 
+  {% if use_wildcard_domain is defined and not use_wildcard_domain -%}
+  ssl_certificate /etc/letsencrypt/live/{{ server_name }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ server_name }}/privkey.pem;
+  {% endif %}
+
   location / {
     return 302 https://www.{{ server_name }}$request_uri;
   }
